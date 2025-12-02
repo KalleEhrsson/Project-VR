@@ -1,0 +1,114 @@
+using UnityEngine;
+using UnityEngine.XR;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+public class VRHandBoneDriver : MonoBehaviour
+{
+    public XRNode handNode;
+
+    [System.Serializable]
+    public class FingerBones
+    {
+        [ReadOnly] public Transform bone1;
+        [ReadOnly] public Transform bone2;
+        [ReadOnly] public Transform bone3;
+    }
+
+    [Header("Index Finger")]
+    public FingerBones index;
+
+    [Header("Middle Finger")]
+    public FingerBones middle;
+
+    [Header("Ring Finger")]
+    public FingerBones ring;
+
+    [Header("Little Finger")]
+    public FingerBones little;
+
+    [Header("Thumb")]
+    public FingerBones thumb;
+
+    [Header("Settings")]
+    public float fingerCurl = 70f;
+    public float thumbCurl = 60f;
+
+    void Awake()
+    {
+        AutoAssign();
+    }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        // Auto-assign in edit mode too
+        if (!Application.isPlaying)
+            AutoAssign();
+    }
+#endif
+
+    void AutoAssign()
+    {
+        string prefix = (handNode == XRNode.LeftHand) ? "L_" : "R_";
+
+        AssignFinger(index, prefix, "Index");
+        AssignFinger(middle, prefix, "Middle");
+        AssignFinger(ring, prefix, "Ring");
+        AssignFinger(little, prefix, "Little");
+
+        thumb.bone1 = FindBone(prefix + "ThumbProximal");
+        thumb.bone2 = FindBone(prefix + "ThumbDistal");
+        thumb.bone3 = FindBone(prefix + "ThumbTip");
+    }
+
+    void AssignFinger(FingerBones f, string prefix, string name)
+    {
+        f.bone1 = FindBone(prefix + name + "Proximal");
+        f.bone2 = FindBone(prefix + name + "Intermediate");
+        f.bone3 = FindBone(prefix + name + "Distal");
+    }
+
+    Transform FindBone(string name)
+    {
+        foreach (Transform t in GetComponentsInChildren<Transform>(true))
+            if (t.name == name) return t;
+        return null;
+    }
+
+    void Update()
+    {
+        InputDevice device = InputDevices.GetDeviceAtXRNode(handNode);
+        device.TryGetFeatureValue(CommonUsages.grip, out float grip);
+        device.TryGetFeatureValue(CommonUsages.trigger, out float trigger);
+
+        CurlFinger(index, trigger * fingerCurl);  // index = trigger
+        CurlFinger(middle, grip * fingerCurl);
+        CurlFinger(ring, grip * fingerCurl);
+        CurlFinger(little, grip * fingerCurl);
+        CurlFinger(thumb, grip * thumbCurl);
+    }
+
+    void CurlFinger(FingerBones f, float curl)
+    {
+        if (f.bone1) f.bone1.localRotation = Quaternion.Euler(curl,0,0);
+        if (f.bone2) f.bone2.localRotation = Quaternion.Euler(curl,0,0);
+        if (f.bone3) f.bone3.localRotation = Quaternion.Euler(curl,0,0);
+    }
+}
+
+public class ReadOnlyAttribute : PropertyAttribute {}
+
+#if UNITY_EDITOR
+[CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
+public class ReadOnlyDrawer : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        GUI.enabled = false;
+        EditorGUI.PropertyField(position, property, true);
+        GUI.enabled = true;
+    }
+}
+#endif
