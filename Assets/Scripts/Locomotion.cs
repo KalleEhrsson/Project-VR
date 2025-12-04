@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class VRLocomotion : MonoBehaviour
+public class Locomotion : MonoBehaviour
 {
     public InputActionProperty moveAction;
     public Transform head;

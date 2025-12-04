@@ -4,7 +4,7 @@ using UnityEngine.XR;
 using UnityEditor;
 #endif
 
-public class VRHandBoneDriver : MonoBehaviour
+public class HandBoneDriver : MonoBehaviour
 {
     public XRNode handNode;
 
@@ -83,18 +83,33 @@ public class VRHandBoneDriver : MonoBehaviour
         device.TryGetFeatureValue(CommonUsages.grip, out float grip);
         device.TryGetFeatureValue(CommonUsages.trigger, out float trigger);
 
-        CurlFinger(index, trigger * fingerCurl);  // index = trigger
+        CurlFinger(index, trigger * fingerCurl);
         CurlFinger(middle, grip * fingerCurl);
-        CurlFinger(ring, grip * fingerCurl);
-        CurlFinger(little, grip * fingerCurl);
+
+        CurlFinger(ring, grip * fingerCurl * 1.1f);
+        CurlFinger(little, grip * fingerCurl * 1.2f);
+
         CurlFinger(thumb, grip * thumbCurl);
     }
 
     void CurlFinger(FingerBones f, float curl)
     {
-        if (f.bone1) f.bone1.localRotation = Quaternion.Euler(curl,0,0);
-        if (f.bone2) f.bone2.localRotation = Quaternion.Euler(curl,0,0);
-        if (f.bone3) f.bone3.localRotation = Quaternion.Euler(curl,0,0);
+        // how much each joint bends
+        float p = curl * 0.55f; // proximal
+        float m = curl * 0.35f; // middle
+        float d = curl * 0.15f; // distal
+    
+        // inward wrap angle (fingers rotate a bit sideways)
+        float wrap = curl * 0.25f;
+    
+        if (f.bone1)
+            f.bone1.localRotation = Quaternion.Euler(p, wrap, 0);
+    
+        if (f.bone2)
+            f.bone2.localRotation = Quaternion.Euler(m, wrap * 0.5f, 0);
+    
+        if (f.bone3)
+            f.bone3.localRotation = Quaternion.Euler(d, wrap * 0.2f, 0);
     }
 }
 
