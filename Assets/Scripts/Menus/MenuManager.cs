@@ -3,15 +3,27 @@ using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
+    private LocomotionInputBlocker locomotionBlocker;
     public GameObject mainPanel;          
     public GameObject settingsPanel;      
     public GameObject backButton;         
     public GameObject[] subPanels;        
     public TabManager tabManager;
 
+    void Awake()
+    {
+        // Auto-find the locomotion blocker in the scene
+        locomotionBlocker = FindFirstObjectByType<LocomotionInputBlocker>();
+
+        if (locomotionBlocker == null)
+            Debug.LogWarning("LocomotionInputBlocker was not found in the scene.");
+    }
+    
     void Start()
     {
-        // Start at main menu only
+        if (locomotionBlocker != null)
+            locomotionBlocker.DisableLocomotion();
+
         mainPanel.SetActive(true);
         settingsPanel.SetActive(false);
 
@@ -23,6 +35,8 @@ public class MenuManager : MonoBehaviour
 
     public void StartGame()
     {
+        if (locomotionBlocker != null)
+            locomotionBlocker.EnableLocomotion();
         SceneManager.LoadScene("Game");
     }
 

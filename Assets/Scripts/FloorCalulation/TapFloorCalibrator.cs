@@ -9,36 +9,51 @@ public class TapFloorCalibrator : MonoBehaviour
     #region Variables
 
     public XROrigin xrOrigin;
-    public Transform controller;
     public Transform cameraOffset;
+    
+    public Transform gameFloorMarker;   // visual marker or debug plane
+    public Transform gameFloorCollider; // the real floor for gameplay
+    
+    public static float RealFloorY = 0f;
 
-    public float stabilityThreshold = 0.002f;     // When controller is considered still
-    public float descentThreshold = 0.01f;        // How fast must it move downward
-    public float holdTimeRequired = 1f;         // Time on floor required
-    public float smooth = 12f;                    // Rig move smoothness
+    public Transform leftController;
+    public Transform rightController;
+
+    Transform bestController;
+
+    public float stabilityThreshold = 0.002f;     
+    public float holdTimeRequired = 1f;           
+    public float smooth = 12f;                    
 
     public AudioSource audioSource;
     public AudioClip dingClip;
 
-    public float hapticStrength = 0.1f;           // Subtle vibration while holding
-    public float successHapticStrength = 0.3f;    // Stronger vibration on success
+    public float hapticStrength = 0.1f;           
+    public float successHapticStrength = 0.3f;    
 
     public bool showGizmos = true;
 
     float targetOffset = 0f;
-    float holdTimer = 0f;
-    float lastY = 0f;
+
+    float leftStableTime = 0f;
+    float rightStableTime = 0f;
+
+    float lastLeftY = 0f;
+    float lastRightY = 0f;
+    
+    float leftDownwardTime = 0f;
+    float rightDownwardTime = 0f;
+    public float downwardRequired = 0.15f; // How long it must be moving downward
 
     bool waitingForTouch = false;
-    bool touchedSurface = false;
     bool calibrated = false;
 
     GameObject popup;
     string debugText = "";
 
-    Color gizmoIdle = Color.red;             // While waiting for touch
-    Color gizmoTouch = Color.blue;           // While holding on floor
-    Color gizmoCalibrated = Color.green;     // After calibration success
+    Color gizmoIdle = Color.red;
+    Color gizmoTouch = Color.blue;
+    Color gizmoCalibrated = Color.green;
 
     #endregion
 
@@ -62,13 +77,15 @@ public class TapFloorCalibrator : MonoBehaviour
     public void BeginCalibration()
     {
         waitingForTouch = true;
-        touchedSurface = false;
         calibrated = false;
-        holdTimer = 0;
 
-        lastY = controller.position.y;
+        leftStableTime = 0f;
+        rightStableTime = 0f;
 
-        ShowPopup("Touch the floor with your controller...");
+        lastLeftY = leftController.position.y;
+        lastRightY = rightController.position.y;
+
+        ShowPopup("Place both controllers on the floor");
     }
 
     #endregion
@@ -83,50 +100,69 @@ public class TapFloorCalibrator : MonoBehaviour
         if (!waitingForTouch)
             return;
 
-        float currentY = controller.position.y;
-        float movement = Mathf.Abs(currentY - lastY);
-        float downwardSpeed = lastY - currentY;
-        lastY = currentY;
+        float headY = xrOrigin.Camera.transform.position.y;
 
+        // LEFT CONTROLLER
+        float leftY = leftController.position.y;
+        float leftMove = Mathf.Abs(leftY - lastLeftY);
+        float leftDownSpeed = lastLeftY - leftY; // positive = going down
+
+        bool leftStable = leftMove < stabilityThreshold;
+        bool leftLow = leftY < headY - 0.6f;
+
+        // track downward motion
+        if (leftDownSpeed > 0.003f)
+            leftDownwardTime += Time.deltaTime;
+        else
+            leftDownwardTime = 0f;
+
+        // only start stability timer if it moved downward first
+        if (leftLow && leftStable && leftDownwardTime > downwardRequired)
+            leftStableTime += Time.deltaTime;
+        else
+            leftStableTime = 0f;
+
+        lastLeftY = leftY;
+
+
+        // RIGHT CONTROLLER
+        float rightY = rightController.position.y;
+        float rightMove = Mathf.Abs(rightY - lastRightY);
+        float rightDownSpeed = lastRightY - rightY;
+
+        bool rightStable = rightMove < stabilityThreshold;
+        bool rightLow = rightY < headY - 0.6f;
+
+        if (rightDownSpeed > 0.003f)
+            rightDownwardTime += Time.deltaTime;
+        else
+            rightDownwardTime = 0f;
+
+        if (rightLow && rightStable && rightDownwardTime > downwardRequired)
+            rightStableTime += Time.deltaTime;
+        else
+            rightStableTime = 0f;
+
+        lastRightY = rightY;
+
+        // Pick the better (lowest) controller automatically
+        bestController = leftY < rightY ? leftController : rightController;
+        float bestHeight = bestController.position.y;
+
+        // Debug readout
         debugText =
-            $"Y: {currentY:F3}\n" +
-            $"Movement: {movement:F4}\n" +
-            $"DownSpeed: {downwardSpeed:F4}\n" +
-            $"Hold: {holdTimer:F2}\n" +
-            $"Touched: {touchedSurface}";
+            $"L_Y: {leftY:F3}  R_Y: {rightY:F3}\n" +
+            $"L_Stable: {leftStableTime:F2}  R_Stable: {rightStableTime:F2}\n" +
+            $"Best: {(bestController == leftController ? "Left" : "Right")}";
 
-        // After touching surface
-        if (touchedSurface)
+        // If ANY controller stays low + stable long enough → calibrate
+        if (leftStableTime >= holdTimeRequired || rightStableTime >= holdTimeRequired)
         {
-            if (movement > stabilityThreshold)
-            {
-                holdTimer = 0;
-                ShowPopup("Hold still...");
-                return;
-            }
-
-            SendHaptics(hapticStrength, 0.1f);
-
-            holdTimer += Time.deltaTime;
-            ShowPopup("Hold still...");
-
-            if (holdTimer >= holdTimeRequired)
-            {
-                Calibrate();
-            }
-
+            Calibrate(bestHeight);
             return;
         }
 
-        // Detect touch moment
-        bool movingDownward = downwardSpeed > descentThreshold;
-        bool stableNow = movement < stabilityThreshold;
-
-        if (movingDownward && stableNow)
-        {
-            touchedSurface = true;
-            ShowPopup("Hold still...");
-        }
+        ShowPopup("Hold controllers still on the floor...");
     }
 
     #endregion
@@ -134,16 +170,25 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Calibration
 
-    void Calibrate()
+    void Calibrate(float chosenHeight)
     {
         waitingForTouch = false;
         calibrated = true;
 
-        float controllerY = controller.position.y;
-        targetOffset = -controllerY;
+        targetOffset = -chosenHeight;
 
         PlayerPrefs.SetFloat("FloorOffset", targetOffset);
         PlayerPrefs.Save();
+
+        // Update global floor height
+        RealFloorY = chosenHeight;
+
+        // Update game scene objects
+        if (gameFloorMarker != null)
+            gameFloorMarker.position = new Vector3(gameFloorMarker.position.x, chosenHeight, gameFloorMarker.position.z);
+
+        if (gameFloorCollider != null)
+            gameFloorCollider.position = new Vector3(gameFloorCollider.position.x, chosenHeight, gameFloorCollider.position.z);
 
         SendHaptics(successHapticStrength, 0.2f);
         PlayDing();
@@ -259,20 +304,19 @@ public class TapFloorCalibrator : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if (!showGizmos || controller == null)
+        if (!showGizmos)
             return;
 
-        Gizmos.color = calibrated ? gizmoCalibrated :
-                      touchedSurface ? gizmoTouch :
-                      gizmoIdle;
+        Transform c = bestController != null ? bestController : leftController;
+        if (c == null) return;
 
-        Vector3 pos = controller.position;
+        Gizmos.color = calibrated ? gizmoCalibrated : gizmoIdle;
 
+        Vector3 pos = c.position;
         Gizmos.DrawSphere(pos, 0.02f);
 
         Vector3 floorPoint = new Vector3(pos.x, 0, pos.z);
         Gizmos.DrawLine(pos, floorPoint);
-
         Gizmos.DrawWireCube(floorPoint, new Vector3(0.1f, 0.002f, 0.1f));
     }
 

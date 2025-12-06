@@ -16,19 +16,10 @@ public class HandBoneDriver : MonoBehaviour
         [ReadOnly] public Transform bone3;
     }
 
-    [Header("Index Finger")]
     public FingerBones index;
-
-    [Header("Middle Finger")]
     public FingerBones middle;
-
-    [Header("Ring Finger")]
     public FingerBones ring;
-
-    [Header("Little Finger")]
     public FingerBones little;
-
-    [Header("Thumb")]
     public FingerBones thumb;
 
     [Header("Settings")]
