@@ -18,7 +18,7 @@ public class HandGrabPhysics : MonoBehaviour
         handRb = GetComponent<Rigidbody>();
         handRb.isKinematic = true;
 
-        Debug.Log($"[Grab] Hand initialized. HandRB = {handRb}");
+        Debug.Log("[Grab] Hand initialized");
     }
 
     void Update()
@@ -26,32 +26,21 @@ public class HandGrabPhysics : MonoBehaviour
         bool grabbing = grabAction.action.ReadValue<float>() > 0.5f;
 
         if (grabbing && joint == null)
-        {
-            Debug.Log("[Grab] Grip pressed. Attempting grab...");
             TryGrab();
-        }
 
         if (!grabbing && joint != null)
-        {
-            Debug.Log("[Grab] Grip released. Releasing object.");
             Release();
-        }
     }
 
     void OnTriggerEnter(Collider other)
     {
         GrabPoint gp = other.GetComponent<GrabPoint>();
-        if (gp != null)
+        if (gp != null && gp.IsAboveFloor())
         {
-            Debug.Log($"[Grab] Entered GrabPoint {gp.name} (priority {gp.priority})");
-
             if (currentPoint == null || gp.priority > currentPoint.priority)
             {
                 if (currentPoint != null)
-                {
-                    Debug.Log($"[Grab] Replacing previous GrabPoint {currentPoint.name}");
                     currentPoint.Hide();
-                }
 
                 currentPoint = gp;
                 currentPoint.Show();
@@ -60,9 +49,8 @@ public class HandGrabPhysics : MonoBehaviour
         }
 
         Rigidbody rb = other.attachedRigidbody;
-        if (rb != null)
+        if (rb != null && rb.position.y >= TapFloorCalibrator.RealFloorY + 0.02f)
         {
-            Debug.Log($"[Grab] Entered RB candidate {rb.name}");
             targetRb = rb;
         }
     }
@@ -72,65 +60,54 @@ public class HandGrabPhysics : MonoBehaviour
         GrabPoint gp = other.GetComponent<GrabPoint>();
         if (gp != null && gp == currentPoint)
         {
-            Debug.Log($"[Grab] Exited GrabPoint {gp.name}");
-            currentPoint.Hide();
+            gp.Hide();
             currentPoint = null;
             return;
         }
 
         Rigidbody rb = other.attachedRigidbody;
         if (rb != null && rb == targetRb && joint == null)
-        {
-            Debug.Log($"[Grab] Exited RB candidate {rb.name}");
             targetRb = null;
-        }
     }
 
     void TryGrab()
     {
-        // Priority grab: GrabPoint → rigidbody
         if (currentPoint != null)
         {
             Rigidbody rb = currentPoint.GetComponentInParent<Rigidbody>();
-
-            Debug.Log($"[Grab] Trying GrabPoint {currentPoint.name}, RB = {rb}");
-
             if (rb == null)
-            {
-                Debug.LogError("[Grab] ERROR: GrabPoint has NO Rigidbody parent!");
                 return;
-            }
 
-            CreateJoint(rb);
-            Debug.Log($"[Grab] SUCCESS: Grabbed via GrabPoint {currentPoint.name}");
+            if (rb.position.y < TapFloorCalibrator.RealFloorY + 0.02f)
+                return;
 
+            CreateJoint(rb, currentPoint);
             currentPoint.Hide();
             currentPoint = null;
             return;
         }
 
-        // Fallback: target rigidbody
         if (targetRb != null)
         {
-            Debug.Log($"[Grab] Trying fallback RB grab: {targetRb.name}");
-            CreateJoint(targetRb);
-            return;
-        }
+            if (targetRb.position.y < TapFloorCalibrator.RealFloorY + 0.02f)
+                return;
 
-        Debug.LogWarning("[Grab] No GrabPoint or RB available to grab.");
+            CreateJoint(targetRb);
+        }
     }
 
-    void CreateJoint(Rigidbody rb)
+    void CreateJoint(Rigidbody rb, GrabPoint grabPoint = null)
     {
-        Debug.Log($"[Grab] Creating joint between HAND and {rb.name}");
-
         joint = rb.gameObject.AddComponent<ConfigurableJoint>();
         joint.connectedBody = handRb;
+        
+        // Snap to the grab point so the intended hand placement aligns with the controller
+        joint.autoConfigureConnectedAnchor = false;
+        joint.anchor = grabPoint != null
+            ? rb.transform.InverseTransformPoint(grabPoint.transform.position)
+            : Vector3.zero;
+        joint.connectedAnchor = Vector3.zero;
 
-        if (rb.isKinematic)
-            Debug.LogWarning($"[Grab] WARNING: Target RB {rb.name} is KINEMATIC. Joint will NOT move it.");
-
-        // Lock position + rotation
         joint.xMotion = ConfigurableJointMotion.Locked;
         joint.yMotion = ConfigurableJointMotion.Locked;
         joint.zMotion = ConfigurableJointMotion.Locked;
@@ -141,29 +118,13 @@ public class HandGrabPhysics : MonoBehaviour
 
         joint.breakForce = breakForce;
         joint.breakTorque = breakTorque;
-
-        JointDrive drive = new JointDrive();
-        drive.positionSpring = 4000f;
-        drive.positionDamper = 50f;
-        drive.maximumForce = Mathf.Infinity;
-
-        joint.xDrive = drive;
-        joint.yDrive = drive;
-        joint.zDrive = drive;
-
-        Debug.Log($"[Grab] Joint successfully created on {rb.name}");
     }
 
     void Release()
     {
-        if (joint == null)
-        {
-            Debug.LogWarning("[Grab] Release called but no joint exists.");
-            return;
-        }
+        if (joint != null)
+            Destroy(joint);
 
-        Debug.Log($"[Grab] Destroying joint on {joint.gameObject.name}");
-        Destroy(joint);
         joint = null;
         targetRb = null;
     }
