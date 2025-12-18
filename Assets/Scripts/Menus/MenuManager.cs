@@ -9,6 +9,7 @@ public class MenuManager : MonoBehaviour
     public GameObject backButton;         
     public GameObject[] subPanels;        
     public TabManager tabManager;
+    public SequentialRebinder rebindManager;
 
     void Awake()
     {
@@ -77,6 +78,14 @@ public class MenuManager : MonoBehaviour
         mainPanel.SetActive(true);
 
         UpdateBackButton();
+    }
+    
+    public void BeginControlRebind()
+    {
+        if (rebindManager != null)
+            rebindManager.StartRebindSequence();
+        else
+            Debug.LogWarning("VRSequentialRebinder reference is not assigned on MenuManager.");
     }
 
     void UpdateBackButton()

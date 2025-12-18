@@ -1,0 +1,441 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.InputSystem;
+using TMPro;
+
+public class SequentialRebinder : MonoBehaviour
+{
+    #region Types And Structs (What This System Uses)
+
+    [System.Serializable]
+    public struct RebindStep
+    {
+        public InputActionReference action;
+        public string displayName;
+    }
+
+    public enum RebindState
+    {
+        Idle,
+        WaitingForInput,
+        PausedOrExited,
+        Completed
+    }
+
+    #endregion
+
+    #region Inspector Stuff (UI And Assets)
+
+    [SerializeField]
+    private InputActionAsset inputActions;
+
+    [SerializeField]
+    private TextMeshProUGUI instructionText;
+
+    [SerializeField]
+    private TextMeshProUGUI conflictWarningText;
+
+    [SerializeField]
+    private UnityEvent<string> onInstructionChanged;
+
+    [SerializeField]
+    private UnityEvent<string> onConflictDetected;
+
+    #endregion
+
+    #region Rebind Rules (What Is Allowed)
+
+    private readonly HashSet<string> allowedControlTokens = new HashSet<string>
+    {
+        "trigger",
+        "grip",
+        "primarybutton",
+        "secondarybutton",
+        "joystick"
+    };
+
+    #endregion
+
+    private List<RebindStep> orderedActions = new List<RebindStep>();
+
+    #region Current State (What Is Happening Right Now)
+
+    private const string PlayerPrefsKey = "VRSequentialRebinder_Bindings";
+
+    private readonly Dictionary<string, string> boundPathsByAction = new Dictionary<string, string>();
+
+    private int currentStepIndex = -1;
+    private RebindState state = RebindState.Idle;
+
+    private InputActionRebindingExtensions.RebindingOperation activeRebindingOperation;
+    private InputAction pauseOrExitAction;
+    private InputActionAsset cachedAsset;
+
+    private string currentInstruction = string.Empty;
+    private string currentConflictWarning = string.Empty;
+
+    public string CurrentInstructionText => currentInstruction;
+    public string CurrentConflictWarningText => currentConflictWarning;
+    public RebindState CurrentState => state;
+
+    #endregion
+
+    #region Unity Lifetime (Awake Enable Disable Destroy)
+
+    void Awake()
+    {
+        InitializePauseAction();
+        BuildDefaultRebindSequence();
+        LoadSavedBindings();
+    }
+
+    void OnEnable()
+    {
+        pauseOrExitAction?.Enable();
+    }
+
+    void OnDisable()
+    {
+        pauseOrExitAction?.Disable();
+        CancelRebindOperation();
+        SaveBindings();
+    }
+
+    void OnDestroy()
+    {
+        CancelRebindOperation();
+
+        if (pauseOrExitAction != null)
+            pauseOrExitAction.Dispose();
+    }
+
+    #endregion
+
+    public void StartRebindSequence()
+    {
+        if (orderedActions == null || orderedActions.Count == 0)
+        {
+            UpdateInstruction("No actions configured for rebinding.");
+            return;
+        }
+
+        boundPathsByAction.Clear();
+        currentStepIndex = 0;
+        state = RebindState.WaitingForInput;
+        BeginRebindForCurrentStep();
+    }
+
+    void InitializePauseAction()
+    {
+        pauseOrExitAction = new InputAction(
+            "PauseOrExit",
+            InputActionType.Button,
+            "<XRController>{LeftHand}/menuButton");
+
+        pauseOrExitAction.performed += OnPauseOrExitPerformed;
+    }
+
+    void OnPauseOrExitPerformed(InputAction.CallbackContext context)
+    {
+        if (state == RebindState.Idle || state == RebindState.Completed)
+            return;
+
+        CancelRebindOperation();
+        SaveBindings();
+        state = RebindState.PausedOrExited;
+        UpdateInstruction("Rebinding canceled. Returning to menu.");
+    }
+
+    #region Rebind Flow (The Step By Step Wizard)
+
+    void BeginRebindForCurrentStep()
+    {
+        CancelRebindOperation();
+
+        if (state == RebindState.PausedOrExited)
+            return;
+
+        if (currentStepIndex < 0 || currentStepIndex >= orderedActions.Count)
+        {
+            CompleteSequence();
+            return;
+        }
+
+        var entry = orderedActions[currentStepIndex];
+        var action = entry.action != null ? entry.action.action : null;
+
+        if (action == null)
+        {
+            AdvanceToNextStep();
+            return;
+        }
+
+        int bindingIndex = GetPrimaryBindingIndex(action);
+
+        if (bindingIndex < 0)
+        {
+            AdvanceToNextStep();
+            return;
+        }
+
+        UpdateInstruction($"Press button for {entry.displayName}");
+
+        bool wasEnabled = action.enabled;
+        if (!wasEnabled)
+            action.Enable();
+
+        activeRebindingOperation = action.PerformInteractiveRebinding(bindingIndex)
+            .WithControlsExcluding("*/position")
+            .WithControlsExcluding("*/rotation")
+            .WithControlsExcluding("*/devicePose")
+            .WithControlsExcluding("*/pointerPosition")
+            .WithControlsExcluding("*/pointerRotation")
+            .WithControlsExcluding("*/isTracked")
+            .WithControlsExcluding("*/trackingState")
+            .WithControlsExcluding("*/menuButton")
+            .WithControlsExcluding("*/touchpad")
+            .OnCancel(op => OnRebindCanceled(action, wasEnabled))
+            .OnComplete(op => OnRebindComplete(op, entry, bindingIndex, wasEnabled));
+
+        activeRebindingOperation.Start();
+        state = RebindState.WaitingForInput;
+    }
+
+    void AdvanceToNextStep()
+    {
+        currentStepIndex++;
+
+        if (currentStepIndex >= orderedActions.Count)
+        {
+            CompleteSequence();
+            return;
+        }
+
+        BeginRebindForCurrentStep();
+    }
+
+    void CompleteSequence()
+    {
+        CancelRebindOperation();
+        SaveBindings();
+        state = RebindState.Completed;
+        UpdateInstruction("Rebinding complete.");
+    }
+
+    #endregion
+
+    #region Rebind Callbacks (When Input Is Pressed Or Canceled)
+
+    void OnRebindComplete(
+        InputActionRebindingExtensions.RebindingOperation operation,
+        RebindStep entry,
+        int bindingIndex,
+        bool wasEnabled)
+    {
+        var action = entry.action.action;
+        string effectivePath = action.bindings[bindingIndex].effectivePath;
+
+        operation.Dispose();
+        activeRebindingOperation = null;
+
+        if (!wasEnabled)
+            action.Disable();
+
+        if (!IsAllowedControlPath(effectivePath))
+        {
+            UpdateInstruction($"Input not allowed. Press button for {entry.displayName}");
+            BeginRebindForCurrentStep();
+            return;
+        }
+
+        RegisterBinding(entry.displayName, effectivePath);
+        SaveBindings();
+        AdvanceToNextStep();
+    }
+
+    void OnRebindCanceled(InputAction action, bool wasEnabled)
+    {
+        if (!wasEnabled && action.enabled)
+            action.Disable();
+
+        activeRebindingOperation = null;
+    }
+
+    #endregion
+
+    #region Conflict Detection (Two Things On Same Button)
+
+    void RegisterBinding(string displayName, string effectivePath)
+    {
+        if (string.IsNullOrEmpty(effectivePath))
+            return;
+
+        boundPathsByAction[displayName] = effectivePath;
+        CheckForConflicts(displayName, effectivePath);
+    }
+
+    void CheckForConflicts(string currentActionName, string currentPath)
+    {
+        foreach (var pair in boundPathsByAction)
+        {
+            if (pair.Key == currentActionName)
+                continue;
+
+            if (pair.Value == currentPath)
+            {
+                currentConflictWarning =
+                    $"Warning: {pair.Key} and {currentActionName} are bound to the same button";
+
+                UpdateConflictWarning(currentConflictWarning);
+                return;
+            }
+        }
+
+        currentConflictWarning = string.Empty;
+        UpdateConflictWarning(currentConflictWarning);
+    }
+
+    #endregion
+
+    #region Validation (Is This Input Even Allowed)
+
+    bool IsAllowedControlPath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return false;
+
+        string lowered = path.ToLowerInvariant();
+
+        if (lowered.Contains("menubutton"))
+            return false;
+
+        foreach (var token in allowedControlTokens)
+        {
+            if (lowered.Contains(token))
+                return true;
+        }
+
+        return false;
+    }
+
+    #endregion
+
+    #region Saving And Loading (PlayerPrefs)
+
+    void LoadSavedBindings()
+    {
+        var asset = GetActionAsset();
+        if (asset == null)
+            return;
+
+        cachedAsset = asset;
+
+        if (PlayerPrefs.HasKey(PlayerPrefsKey))
+            asset.LoadBindingOverridesFromJson(PlayerPrefs.GetString(PlayerPrefsKey));
+    }
+
+    void SaveBindings()
+    {
+        var asset = GetActionAsset();
+        if (asset == null)
+            return;
+
+        string json = asset.SaveBindingOverridesAsJson();
+        PlayerPrefs.SetString(PlayerPrefsKey, json);
+        PlayerPrefs.Save();
+    }
+
+    InputActionAsset GetActionAsset()
+    {
+        if (cachedAsset != null)
+            return cachedAsset;
+
+        foreach (var entry in orderedActions)
+        {
+            if (entry.action != null &&
+                entry.action.action != null &&
+                entry.action.action.actionMap != null)
+                return entry.action.action.actionMap.asset;
+        }
+
+        return null;
+    }
+
+    #endregion
+
+    #region Helpers (Small Utility Functions)
+
+    int GetPrimaryBindingIndex(InputAction action)
+    {
+        for (int i = 0; i < action.bindings.Count; i++)
+        {
+            var binding = action.bindings[i];
+            if (!binding.isComposite && !binding.isPartOfComposite)
+                return i;
+        }
+
+        return -1;
+    }
+
+    void CancelRebindOperation()
+    {
+        if (activeRebindingOperation == null)
+            return;
+
+        activeRebindingOperation.Cancel();
+        activeRebindingOperation.Dispose();
+        activeRebindingOperation = null;
+    }
+
+    void UpdateInstruction(string message)
+    {
+        currentInstruction = message;
+
+        if (instructionText != null)
+            instructionText.text = currentInstruction;
+
+        onInstructionChanged?.Invoke(currentInstruction);
+    }
+
+    void UpdateConflictWarning(string message)
+    {
+        if (conflictWarningText != null)
+            conflictWarningText.text = message;
+
+        onConflictDetected?.Invoke(message);
+    }
+
+    #endregion
+
+    #region Auto Setup (No Inspector Clicking)
+
+    void BuildDefaultRebindSequence()
+    {
+        orderedActions.Clear();
+
+        AddAction("Grab", "Grab");
+        AddAction("Shoot", "Shoot");
+        AddAction("Move", "Move");
+        AddAction("Turn", "Turn");
+        AddAction("Reload", "Reload");
+    }
+
+    void AddAction(string actionName, string displayName)
+    {
+        var action = inputActions.FindAction(actionName, throwIfNotFound: false);
+        if (action == null)
+        {
+            Debug.LogWarning($"Rebind action not found: {actionName}");
+            return;
+        }
+
+        orderedActions.Add(new RebindStep
+        {
+            action = InputActionReference.Create(action),
+            displayName = displayName
+        });
+    }
+
+    #endregion
+}
