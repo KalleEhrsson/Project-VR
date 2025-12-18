@@ -201,7 +201,7 @@ public class HandGrabPhysics : MonoBehaviour
         Quaternion desiredRotation = handPose.rotation * Quaternion.Inverse(localRotation);
         Vector3 desiredPosition = handPose.position - desiredRotation * localAnchor;
 
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.MovePosition(desiredPosition);
         rb.MoveRotation(desiredRotation);
@@ -209,7 +209,7 @@ public class HandGrabPhysics : MonoBehaviour
 
     void SnapToHand(Rigidbody rb)
     {
-        rb.velocity = Vector3.zero;
+        rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.MovePosition(transform.position);
         rb.MoveRotation(transform.rotation);
