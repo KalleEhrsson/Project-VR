@@ -6,61 +6,96 @@ using UnityEngine.XR;
 
 public class TapFloorCalibrator : MonoBehaviour
 {
-    #region Variables
+    #region Inspector Stuff (Rig And Scene References)
+    [SerializeField]
+    private XROrigin xrOrigin;
 
-    public XROrigin xrOrigin;
-    public Transform cameraOffset;
+    [SerializeField]
+    private Transform cameraOffset; // Populated from XR Origin if left empty
     
-    public Transform gameFloorMarker;   // visual marker or debug plane
-    public Transform gameFloorCollider; // the real floor for gameplay
-    
+    [SerializeField]
+    private Transform gameFloorMarker;   // visual marker or debug plane
+
+    [SerializeField]
+    private Transform gameFloorCollider; // the real floor for gameplay
+
+    [SerializeField]
+    private Transform leftController; // Kept serialized because controller objects differ per rig
+
+    [SerializeField]
+    private Transform rightController; // Kept serialized because controller objects differ per rig
+
+    [SerializeField]
+    private AudioSource audioSource; // Scene audio source for feedback
+
+    [SerializeField]
+    private AudioClip dingClip;
+
+    [SerializeField]
+    private bool showGizmos = true;
+    #endregion
+
+    #region Tuning (Calibration Settings)
+    [SerializeField]
+    private float stabilityThreshold = 0.002f;     
+
+    [SerializeField]
+    private float holdTimeRequired = 1f;           
+
+    [SerializeField]
+    private float smooth = 12f;                    
+
+    [SerializeField]
+    private float hapticStrength = 0.1f;           
+
+    [SerializeField]
+    private float successHapticStrength = 0.3f;    
+
+    [SerializeField]
+    private float downwardRequired = 0.15f; // How long it must be moving downward
+    #endregion
+
+    #region Shared State (Global Floor Height)
     public static float RealFloorY = 0f;
+    #endregion
 
-    public Transform leftController;
-    public Transform rightController;
+    #region Current State (What Is Happening Right Now)
+    private Transform bestController;
 
-    Transform bestController;
+    private float targetOffset = 0f;
 
-    public float stabilityThreshold = 0.002f;     
-    public float holdTimeRequired = 1f;           
-    public float smooth = 12f;                    
+    private float leftStableTime = 0f;
+    private float rightStableTime = 0f;
 
-    public AudioSource audioSource;
-    public AudioClip dingClip;
-
-    public float hapticStrength = 0.1f;           
-    public float successHapticStrength = 0.3f;    
-
-    public bool showGizmos = true;
-
-    float targetOffset = 0f;
-
-    float leftStableTime = 0f;
-    float rightStableTime = 0f;
-
-    float lastLeftY = 0f;
-    float lastRightY = 0f;
+    private float lastLeftY = 0f;
+    private float lastRightY = 0f;
     
-    float leftDownwardTime = 0f;
-    float rightDownwardTime = 0f;
-    public float downwardRequired = 0.15f; // How long it must be moving downward
+    private float leftDownwardTime = 0f;
+    private float rightDownwardTime = 0f;
 
-    bool waitingForTouch = false;
-    bool calibrated = false;
+    private bool waitingForTouch = false;
+    private bool calibrated = false;
 
-    GameObject popup;
-    string debugText = "";
+    private GameObject popup;
+    private string debugText = "";
 
-    Color gizmoIdle = Color.red;
-    Color gizmoTouch = Color.blue;
-    Color gizmoCalibrated = Color.green;
-
+    private readonly Color gizmoIdle = Color.red;
+    private readonly Color gizmoTouch = Color.blue;
+    private readonly Color gizmoCalibrated = Color.green;
     #endregion
 
 
-    #region Startup
+    #region Unity Lifetime (Awake Start)
+    private void Awake()
+    {
+        xrOrigin ??= GetComponentInParent<XROrigin>();
+        if (xrOrigin != null && cameraOffset == null)
+            cameraOffset = xrOrigin.CameraFloorOffsetObject != null
+                ? xrOrigin.CameraFloorOffsetObject.transform
+                : xrOrigin.transform;
+    }
 
-    void Start()
+    private void Start()
     {
         if (PlayerPrefs.HasKey("FloorOffset"))
         {
@@ -93,7 +128,7 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Update Loop
 
-    void Update()
+    private void Update()
     {
         SmoothMove();
 
@@ -170,7 +205,7 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Calibration
 
-    void Calibrate(float chosenHeight)
+    private void Calibrate(float chosenHeight)
     {
         waitingForTouch = false;
         calibrated = true;
@@ -201,7 +236,7 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Movement
 
-    void SmoothMove()
+    private void SmoothMove()
     {
         if (!Mathf.Approximately(cameraOffset.localPosition.y, targetOffset))
         {
@@ -219,7 +254,7 @@ public class TapFloorCalibrator : MonoBehaviour
         }
     }
 
-    void ApplyInstant(float offset)
+    private void ApplyInstant(float offset)
     {
         targetOffset = offset;
         cameraOffset.localPosition =
@@ -231,14 +266,14 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Haptics + Audio
 
-    void SendHaptics(float amplitude, float duration)
+    private void SendHaptics(float amplitude, float duration)
     {
         InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
         if (device.isValid)
             device.SendHapticImpulse(0, amplitude, duration);
     }
 
-    void PlayDing()
+    private void PlayDing()
     {
         if (audioSource != null && dingClip != null)
             audioSource.PlayOneShot(dingClip, 0.7f);
@@ -249,7 +284,7 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Popup System
 
-    void ShowPopup(string message)
+    private void ShowPopup(string message)
     {
         if (popup == null)
             popup = CreatePopup();
@@ -261,7 +296,7 @@ public class TapFloorCalibrator : MonoBehaviour
         popup.transform.rotation = Quaternion.LookRotation(cam.forward);
     }
 
-    GameObject CreatePopup()
+    private GameObject CreatePopup()
     {
         GameObject canvasObj = new GameObject("PopupCanvas");
         Canvas canvas = canvasObj.AddComponent<Canvas>();
@@ -302,7 +337,7 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Gizmos
 
-    void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         if (!showGizmos)
             return;

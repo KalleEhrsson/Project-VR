@@ -2,16 +2,26 @@ using UnityEngine;
 
 public class GrabPoint : MonoBehaviour
 {
-    public int priority = 10;
+    #region Inspector Stuff (Grab Configuration)
+    [SerializeField]
+    private int priority = 10;
+
     [Tooltip("Explicit transform that defines the grab pose for this point. Defaults to this transform.")]
-    public Transform attachTransform;
+    [SerializeField]
+    private Transform attachTransform; // Kept serialized to allow designers to override the grab pose visually
+    #endregion
 
-    Rigidbody owningRigidbody;
+    #region Cached Components (Self Setup)
+    private Rigidbody owningRigidbody;
+    #endregion
 
-    static GameObject bubblePrefab;
-    GameObject bubbleInstance;
+    #region Current State (What Is Happening Right Now)
+    private static GameObject bubblePrefab;
+    private GameObject bubbleInstance;
+    #endregion
 
-    void Awake()
+    #region Unity Lifetime (Awake Enable Disable Destroy)
+    private void Awake()
     {
         owningRigidbody = GetComponentInParent<Rigidbody>();
         if (attachTransform == null)
@@ -23,14 +33,20 @@ public class GrabPoint : MonoBehaviour
         if (owningRigidbody == null)
             Debug.LogWarning($"GrabPoint on {name} has no parent Rigidbody. This point will be ignored at runtime.");
     }
+    #endregion
 
+    #region Current State (Public Accessors)
     public bool IsAboveFloor()
     {
         return attachTransform.position.y >= TapFloorCalibrator.RealFloorY + 0.02f;
     }
 
-    public Rigidbody AttachedRigidbody => owningRigidbody;
+    public int Priority => priority;
 
+    public Rigidbody AttachedRigidbody => owningRigidbody;
+    #endregion
+
+    #region Main Logic (What Actually Happens)
     public Pose GetAttachPose()
     {
         if (attachTransform == null)
@@ -83,4 +99,5 @@ public class GrabPoint : MonoBehaviour
     {
         return Quaternion.Inverse(root.rotation) * GetAttachPose().rotation;
     }
+    #endregion
 }

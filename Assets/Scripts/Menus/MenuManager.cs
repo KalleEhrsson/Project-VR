@@ -3,15 +3,32 @@ using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
-    private LocomotionInputBlocker locomotionBlocker;
-    public GameObject mainPanel;          
-    public GameObject settingsPanel;      
-    public GameObject backButton;         
-    public GameObject[] subPanels;        
-    public TabManager tabManager;
-    public SequentialRebinder rebindManager;
+    #region Inspector Stuff (UI Panels And Helpers)
+    [SerializeField]
+    private GameObject mainPanel;          
 
-    void Awake()
+    [SerializeField]
+    private GameObject settingsPanel;      
+
+    [SerializeField]
+    private GameObject backButton;         
+
+    [SerializeField]
+    private GameObject[] subPanels;        
+
+    [SerializeField]
+    private TabManager tabManager; // UI-only reference kept serialized for menu wiring
+
+    [SerializeField]
+    private SequentialRebinder rebindManager;
+    #endregion
+
+    #region Cached Components (Self Setup)
+    private LocomotionInputBlocker locomotionBlocker;
+    #endregion
+
+    #region Unity Lifetime (Awake Start)
+    private void Awake()
     {
         // Auto-find the locomotion blocker in the scene
         locomotionBlocker = FindFirstObjectByType<LocomotionInputBlocker>();
@@ -20,7 +37,7 @@ public class MenuManager : MonoBehaviour
             Debug.LogWarning("LocomotionInputBlocker was not found in the scene.");
     }
     
-    void Start()
+    private void Start()
     {
         if (locomotionBlocker != null)
             locomotionBlocker.DisableLocomotion();
@@ -33,7 +50,9 @@ public class MenuManager : MonoBehaviour
 
         UpdateBackButton();
     }
+    #endregion
 
+    #region Public Entry Points (Called From UI)
     public void StartGame()
     {
         if (locomotionBlocker != null)
@@ -87,8 +106,10 @@ public class MenuManager : MonoBehaviour
         else
             Debug.LogWarning("VRSequentialRebinder reference is not assigned on MenuManager.");
     }
+    #endregion
 
-    void UpdateBackButton()
+    #region Helpers (Small Utility Functions)
+    private void UpdateBackButton()
     {
         // Main menu → no back button
         if (mainPanel.activeSelf)
@@ -100,4 +121,5 @@ public class MenuManager : MonoBehaviour
         // Settings or sub-panel → show it
         backButton.SetActive(true);
     }
+    #endregion
 }

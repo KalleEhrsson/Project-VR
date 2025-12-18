@@ -3,23 +3,44 @@ using UnityEngine.InputSystem;
 
 public class Locomotion : MonoBehaviour
 {
-    public InputActionProperty moveAction;
-    public Transform head;
-    CharacterController cc;
+    #region Inspector Stuff (Input And Rig References)
+    [SerializeField]
+    private InputActionProperty moveAction; // Kept serialized because movement bindings differ between action maps
 
-    float gravity = -9.81f;
-    float verticalVel;
+    [SerializeField]
+    private Transform head; // Visual rig reference required for correct locomotion heading
+    #endregion
 
-    void Start()
+    #region Cached Components (Self Setup)
+    private CharacterController cc;
+    #endregion
+
+    #region Current State (What Is Happening Right Now)
+    private float gravity = -9.81f;
+    private float verticalVel;
+    #endregion
+
+    #region Unity Lifetime (Awake Enable Disable Destroy)
+    private void Awake()
+    {
+        head ??= Camera.main != null ? Camera.main.transform : null;
+    }
+
+    private void Start()
     {
         cc = GetComponent<CharacterController>();
 
         if (moveAction.action != null)
             moveAction.action.Enable(); // important for XR sample actions
     }
+    #endregion
 
-    void Update()
+    #region Main Logic (What Actually Happens)
+    private void Update()
     {
+        if (moveAction.action == null)
+            return;
+
         Vector2 input = moveAction.action.ReadValue<Vector2>();
 
         Vector3 forward = new Vector3(head.forward.x, 0, head.forward.z).normalized;
@@ -37,10 +58,11 @@ public class Locomotion : MonoBehaviour
         UpdateCollider();
     }
 
-    void UpdateCollider()
+    private void UpdateCollider()
     {
         float headHeight = Mathf.Clamp(head.localPosition.y, 1f, 2f);
         cc.height = headHeight;
         cc.center = new Vector3(0, cc.height / 2f, 0);
     }
+    #endregion
 }

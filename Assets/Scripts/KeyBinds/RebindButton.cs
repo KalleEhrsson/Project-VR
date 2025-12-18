@@ -5,29 +5,63 @@ using TMPro;
 
 public class RebindButton : MonoBehaviour
 {
-    public string actionName;
-    public int bindingIndex = 0;
-    public TextMeshProUGUI label;
-    public Button button;
-    public KeybindManager manager;
+    #region Inspector Stuff (UI And Binding Info)
+    [SerializeField]
+    private string actionName;
 
-    InputActionRebindingExtensions.RebindingOperation op;
+    [SerializeField]
+    private int bindingIndex = 0;
 
-    void Start()
+    [SerializeField]
+    private TextMeshProUGUI label; // UI text for showing the current binding
+
+    [SerializeField]
+    private Button button; // UI button that triggers rebinding
+
+    [SerializeField]
+    private KeybindManager manager; // Resolved at runtime if not assigned for convenience
+    #endregion
+
+    #region Current State (What Is Happening Right Now)
+    private InputActionRebindingExtensions.RebindingOperation op;
+    #endregion
+
+    #region Unity Lifetime (Awake Start)
+    private void Awake()
+    {
+        button ??= GetComponent<Button>();
+        label ??= GetComponentInChildren<TextMeshProUGUI>();
+        manager ??= GetComponentInParent<KeybindManager>();
+    }
+
+    private void Start()
     {
         UpdateLabel();
         button.onClick.AddListener(StartRebind);
     }
+    #endregion
 
-    void UpdateLabel()
+    #region Main Logic (What Actually Happens)
+    private void UpdateLabel()
     {
+        if (manager == null || manager.actions == null)
+            return;
+
         var action = manager.actions.FindAction(actionName);
+        if (action == null || label == null)
+            return;
+
         label.text = action.bindings[bindingIndex].ToDisplayString();
     }
 
-    void StartRebind()
+    private void StartRebind()
     {
+        if (manager == null || manager.actions == null)
+            return;
+
         var action = manager.actions.FindAction(actionName);
+        if (action == null)
+            return;
 
         button.interactable = false;
         label.text = "Press any key...";
@@ -44,4 +78,5 @@ public class RebindButton : MonoBehaviour
             })
             .Start();
     }
+    #endregion
 }
