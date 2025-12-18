@@ -3,10 +3,16 @@ using UnityEngine.InputSystem;
 
 public class HandDriver : MonoBehaviour
 {
-    public InputActionProperty positionAction;
-    public InputActionProperty rotationAction;
+    #region Inspector Stuff (Input Actions)
+    [SerializeField]
+    private InputActionProperty positionAction; // Kept serialized because action names vary per controller layout
 
-    void Update()
+    [SerializeField]
+    private InputActionProperty rotationAction; // Kept serialized because action names vary per controller layout
+    #endregion
+
+    #region Main Logic (What Actually Happens)
+    private void Update()
     {
         Vector3 pos = positionAction.action != null
             ? positionAction.action.ReadValue<Vector3>()
@@ -19,4 +25,5 @@ public class HandDriver : MonoBehaviour
         transform.localPosition = pos;
         transform.localRotation = rot;
     }
+    #endregion
 }

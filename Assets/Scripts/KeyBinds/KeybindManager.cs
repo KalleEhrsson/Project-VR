@@ -3,8 +3,12 @@ using UnityEngine.InputSystem;
 
 public class KeybindManager : MonoBehaviour
 {
-    public InputActionAsset actions;
+    #region Inspector Stuff (Input Actions)
+    [SerializeField]
+    private InputActionAsset actions; // Falls back to PlayerInput actions if not assigned
+    #endregion
 
+    #region Public Entry Points (Called From UI)
     // Save a single binding override
     public void SaveBinding(string actionName, int bindingIndex)
     {
@@ -25,14 +29,21 @@ public class KeybindManager : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Unity Lifetime (Awake Enable Disable Destroy)
     // Load everything on startup
-    void Awake()
+    private void Awake()
     {
+        actions ??= GetComponent<PlayerInput>()?.actions;
+        if (actions == null)
+            return;
+
         foreach (var map in actions.actionMaps)
         {
             foreach (var action in map.actions)
                 LoadBinding(action.name);
         }
     }
+    #endregion
 }
