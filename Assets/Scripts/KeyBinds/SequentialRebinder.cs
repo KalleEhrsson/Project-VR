@@ -28,7 +28,7 @@ public class SequentialRebinder : MonoBehaviour
     #region Inspector Stuff (UI And Assets)
 
     [SerializeField]
-    private InputActionAsset inputActions;
+    private InputActionAsset inputActions; // Falls back to PlayerInput actions when available
 
     [SerializeField]
     private TextMeshProUGUI instructionText;
@@ -83,26 +83,27 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Unity Lifetime (Awake Enable Disable Destroy)
 
-    void Awake()
+    private void Awake()
     {
+        inputActions ??= GetComponent<PlayerInput>()?.actions;
         InitializePauseAction();
         BuildDefaultRebindSequence();
         LoadSavedBindings();
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
         pauseOrExitAction?.Enable();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
         pauseOrExitAction?.Disable();
         CancelRebindOperation();
         SaveBindings();
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         CancelRebindOperation();
 
@@ -126,7 +127,7 @@ public class SequentialRebinder : MonoBehaviour
         BeginRebindForCurrentStep();
     }
 
-    void InitializePauseAction()
+    private void InitializePauseAction()
     {
         pauseOrExitAction = new InputAction(
             "PauseOrExit",
@@ -136,7 +137,7 @@ public class SequentialRebinder : MonoBehaviour
         pauseOrExitAction.performed += OnPauseOrExitPerformed;
     }
 
-    void OnPauseOrExitPerformed(InputAction.CallbackContext context)
+    private void OnPauseOrExitPerformed(InputAction.CallbackContext context)
     {
         if (state == RebindState.Idle || state == RebindState.Completed)
             return;
@@ -149,7 +150,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Rebind Flow (The Step By Step Wizard)
 
-    void BeginRebindForCurrentStep()
+    private void BeginRebindForCurrentStep()
     {
         CancelRebindOperation();
 
@@ -202,7 +203,7 @@ public class SequentialRebinder : MonoBehaviour
         state = RebindState.WaitingForInput;
     }
 
-    void AdvanceToNextStep()
+    private void AdvanceToNextStep()
     {
         currentStepIndex++;
 
@@ -215,7 +216,7 @@ public class SequentialRebinder : MonoBehaviour
         BeginRebindForCurrentStep();
     }
 
-    void CompleteSequence()
+    private void CompleteSequence()
     {
         CancelRebindOperation();
         SaveBindings();
@@ -227,7 +228,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Rebind Callbacks (When Input Is Pressed Or Canceled)
 
-    void OnRebindComplete(
+    private void OnRebindComplete(
         InputActionRebindingExtensions.RebindingOperation operation,
         RebindStep entry,
         int bindingIndex,
@@ -254,7 +255,7 @@ public class SequentialRebinder : MonoBehaviour
         AdvanceToNextStep();
     }
 
-    void OnRebindCanceled(InputAction action, bool wasEnabled)
+    private void OnRebindCanceled(InputAction action, bool wasEnabled)
     {
         if (!wasEnabled && action.enabled)
             action.Disable();
@@ -266,7 +267,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Conflict Detection (Two Things On Same Button)
 
-    void RegisterBinding(string displayName, string effectivePath)
+    private void RegisterBinding(string displayName, string effectivePath)
     {
         if (string.IsNullOrEmpty(effectivePath))
             return;
@@ -275,7 +276,7 @@ public class SequentialRebinder : MonoBehaviour
         CheckForConflicts(displayName, effectivePath);
     }
 
-    void CheckForConflicts(string currentActionName, string currentPath)
+    private void CheckForConflicts(string currentActionName, string currentPath)
     {
         foreach (var pair in boundPathsByAction)
         {
@@ -300,7 +301,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Validation (Is This Input Even Allowed)
 
-    bool IsAllowedControlPath(string path)
+    private bool IsAllowedControlPath(string path)
     {
         if (string.IsNullOrEmpty(path))
             return false;
@@ -323,7 +324,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Saving And Loading (PlayerPrefs)
 
-    void LoadSavedBindings()
+    private void LoadSavedBindings()
     {
         var asset = GetActionAsset();
         if (asset == null)
@@ -335,7 +336,7 @@ public class SequentialRebinder : MonoBehaviour
             asset.LoadBindingOverridesFromJson(PlayerPrefs.GetString(PlayerPrefsKey));
     }
 
-    void SaveBindings()
+    private void SaveBindings()
     {
         var asset = GetActionAsset();
         if (asset == null)
@@ -346,7 +347,7 @@ public class SequentialRebinder : MonoBehaviour
         PlayerPrefs.Save();
     }
 
-    InputActionAsset GetActionAsset()
+    private InputActionAsset GetActionAsset()
     {
         if (cachedAsset != null)
             return cachedAsset;
@@ -366,7 +367,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Helpers (Small Utility Functions)
 
-    int GetPrimaryBindingIndex(InputAction action)
+    private int GetPrimaryBindingIndex(InputAction action)
     {
         for (int i = 0; i < action.bindings.Count; i++)
         {
@@ -378,7 +379,7 @@ public class SequentialRebinder : MonoBehaviour
         return -1;
     }
 
-    void CancelRebindOperation()
+    private void CancelRebindOperation()
     {
         if (activeRebindingOperation == null)
             return;
@@ -388,7 +389,7 @@ public class SequentialRebinder : MonoBehaviour
         activeRebindingOperation = null;
     }
 
-    void UpdateInstruction(string message)
+    private void UpdateInstruction(string message)
     {
         currentInstruction = message;
 
@@ -398,7 +399,7 @@ public class SequentialRebinder : MonoBehaviour
         onInstructionChanged?.Invoke(currentInstruction);
     }
 
-    void UpdateConflictWarning(string message)
+    private void UpdateConflictWarning(string message)
     {
         if (conflictWarningText != null)
             conflictWarningText.text = message;
@@ -410,9 +411,12 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Auto Setup (No Inspector Clicking)
 
-    void BuildDefaultRebindSequence()
+    private void BuildDefaultRebindSequence()
     {
         orderedActions.Clear();
+
+        if (inputActions == null)
+            return;
 
         AddAction("Grab", "Grab");
         AddAction("Shoot", "Shoot");
@@ -421,7 +425,7 @@ public class SequentialRebinder : MonoBehaviour
         AddAction("Reload", "Reload");
     }
 
-    void AddAction(string actionName, string displayName)
+    private void AddAction(string actionName, string displayName)
     {
         var action = inputActions.FindAction(actionName, throwIfNotFound: false);
         if (action == null)

@@ -4,26 +4,41 @@ using System.Collections.Generic;
 
 public class HandGrabPhysics : MonoBehaviour
 {
-    public InputActionProperty grabAction;
-    public float breakForce = 2000f;
-    public float breakTorque = 2000f;
+    #region Inspector Stuff (Input And Tunables)
+    [SerializeField]
+    private InputActionProperty grabAction; // Kept serialized because actions come from scene-specific input assets
 
-    Rigidbody handRb;
-    Rigidbody targetRb;
-    ConfigurableJoint joint;
+    [SerializeField]
+    private float breakForce = 2000f;
 
-    readonly List<GrabPoint> grabCandidates = new();
-    GrabPoint bestGrabPoint;
+    [SerializeField]
+    private float breakTorque = 2000f;
+    #endregion
 
-    void Awake()
+    #region Cached Components (Self Setup)
+    private Rigidbody handRb;
+    #endregion
+
+    #region Current State (What Is Happening Right Now)
+    private Rigidbody targetRb;
+    private ConfigurableJoint joint;
+
+    private readonly List<GrabPoint> grabCandidates = new();
+    private GrabPoint bestGrabPoint;
+    #endregion
+
+    #region Unity Lifetime (Awake Enable Disable Destroy)
+    private void Awake()
     {
         handRb = GetComponent<Rigidbody>();
         handRb.isKinematic = true;
 
         Debug.Log("[Grab] Hand initialized");
     }
+    #endregion
 
-    void Update()
+    #region Unity Messages (Update And Physics)
+    private void Update()
     {
         bool grabbing = grabAction.action != null && grabAction.action.ReadValue<float>() > 0.5f;
 
@@ -36,7 +51,7 @@ public class HandGrabPhysics : MonoBehaviour
         RefreshBestGrabPoint(showBubble: joint == null);
     }
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         GrabPoint gp = other.GetComponent<GrabPoint>();
         if (gp != null)
@@ -52,7 +67,7 @@ public class HandGrabPhysics : MonoBehaviour
         }
     }
 
-    void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
         GrabPoint gp = other.GetComponent<GrabPoint>();
         if (gp != null)
@@ -65,8 +80,10 @@ public class HandGrabPhysics : MonoBehaviour
         if (rb != null && rb == targetRb && joint == null)
             targetRb = null;
     }
+    #endregion
 
-    void TryGrab()
+    #region Main Logic (What Actually Happens)
+    private void TryGrab()
     {
         if (bestGrabPoint != null)
         {
@@ -98,7 +115,7 @@ public class HandGrabPhysics : MonoBehaviour
         }
     }
 
-    void CreateJoint(Rigidbody rb, GrabPoint grabPoint = null)
+    private void CreateJoint(Rigidbody rb, GrabPoint grabPoint = null)
     {
         joint = rb.gameObject.AddComponent<ConfigurableJoint>();
         joint.connectedBody = handRb;
@@ -121,7 +138,7 @@ public class HandGrabPhysics : MonoBehaviour
         joint.breakTorque = breakTorque;
     }
 
-    void Release()
+    private void Release()
     {
         if (joint != null)
             Destroy(joint);
@@ -131,7 +148,7 @@ public class HandGrabPhysics : MonoBehaviour
         RefreshBestGrabPoint(showBubble: true);
     }
 
-    void TryAddCandidate(GrabPoint gp)
+    private void TryAddCandidate(GrabPoint gp)
     {
         if (!gp.IsAboveFloor())
             return;
@@ -145,7 +162,7 @@ public class HandGrabPhysics : MonoBehaviour
         RefreshBestGrabPoint(showBubble: joint == null);
     }
 
-    void RemoveCandidate(GrabPoint gp)
+    private void RemoveCandidate(GrabPoint gp)
     {
         if (grabCandidates.Remove(gp))
         {
@@ -154,7 +171,7 @@ public class HandGrabPhysics : MonoBehaviour
         }
     }
 
-    void RefreshBestGrabPoint(bool showBubble)
+    private void RefreshBestGrabPoint(bool showBubble)
     {
         for (int i = grabCandidates.Count - 1; i >= 0; i--)
         {
@@ -171,8 +188,8 @@ public class HandGrabPhysics : MonoBehaviour
             float distance = (candidate.GetAttachPose().position - transform.position).sqrMagnitude;
 
             if (newBest == null ||
-                candidate.priority > newBest.priority ||
-                (candidate.priority == newBest.priority && distance < bestDistance))
+                candidate.Priority > newBest.Priority ||
+                (candidate.Priority == newBest.Priority && distance < bestDistance))
             {
                 newBest = candidate;
                 bestDistance = distance;
@@ -190,7 +207,7 @@ public class HandGrabPhysics : MonoBehaviour
             bestGrabPoint.Hide();
     }
 
-    void AlignRigidBodyToHand(Rigidbody rb, GrabPoint gp)
+    private void AlignRigidBodyToHand(Rigidbody rb, GrabPoint gp)
     {
         Pose attachPose = gp.GetAttachPose();
         Pose handPose = new Pose(transform.position, transform.rotation);
@@ -207,7 +224,7 @@ public class HandGrabPhysics : MonoBehaviour
         rb.MoveRotation(desiredRotation);
     }
 
-    void SnapToHand(Rigidbody rb)
+    private void SnapToHand(Rigidbody rb)
     {
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
@@ -215,7 +232,7 @@ public class HandGrabPhysics : MonoBehaviour
         rb.MoveRotation(transform.rotation);
     }
 
-    void ClearCandidates()
+    private void ClearCandidates()
     {
         foreach (GrabPoint gp in grabCandidates)
             gp.Hide();
@@ -223,4 +240,5 @@ public class HandGrabPhysics : MonoBehaviour
         grabCandidates.Clear();
         bestGrabPoint = null;
     }
+    #endregion
 }

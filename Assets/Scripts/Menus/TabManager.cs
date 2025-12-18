@@ -2,8 +2,12 @@ using UnityEngine;
 
 public class TabManager : MonoBehaviour
 {
-    public GameObject[] panels; // All tab panels
+    #region Inspector Stuff (UI Panels)
+    [SerializeField]
+    private GameObject[] panels; // UI-only references stay serialized for layout flexibility
+    #endregion
 
+    #region Public Entry Points (Called From UI)
     public void OpenTab(GameObject panelToOpen)
     {
         // Close all tabs
@@ -13,4 +17,5 @@ public class TabManager : MonoBehaviour
         // Open selected
         panelToOpen.SetActive(true);
     }
+    #endregion
 }
