@@ -1,88 +1,132 @@
 # 🧟‍♂️ VR Escape Prototype  
 ### _Physics. Parkour. Panic. Built for Quest 3 in Unity 6._
 
-Welcome to the start of a chaotic little VR project where the goal is simple:  
-**escape an alley full of horrors using a gun, your hands, and questionable choices.**
+A physics-driven VR escape prototype focused on **weight, instability, and bad decisions**.  
+This is not a power fantasy. This is a “don’t drop your gun while climbing” fantasy.
 
-This repo is currently **freshly born**.  
-No features yet. No gameplay. Only ambition, dreams, and probably future bugs.
-
----
-
-# 🎯 Game Concept
-
-A VR escape game that combines:
-
-- Physical gun handling  
-- Parkour and climbing  
-- Unforgiving physics  
-- Realistic weight, jank, and tension  
-- Zombies (or something equally rude)
-
-You begin in an alley with a rifle on your back and a pistol on your hip.  
-You climb, scramble, slip, drop things, and try to escape before the undead turn you into a snack.
+The goal is simple: **escape**.
 
 ---
 
-# 🔧 Planned Core Features
+## 🎯 Game Concept
 
-### 🔫 Weapon Physics
-- Rifle that sinks when held with one hand  
-- Pistol on your side you can grab anytime  
-- Guns can fall off surfaces if you place them badly  
-- No magical stability… if you drop your gun that’s your problem
+A VR escape game built around:
 
-### 🧗 Parkour & Climbing
-- Pull yourself up using boxes, ledges, or even using your gun as leverage  
-- Movement relies on actual physics forces  
-- No sticky snapping hands
+- Physical gun handling with real weight  
+- Parkour and climbing using physics forces  
+- Minimal assistance, no sticky hands  
+- Tension over comfort  
+- Enemies that pressure you to move, not fight  
 
-### 🧟 Enemies
+You start in a tight alley with a rifle on your back and a pistol on your hip.  
+You climb, scramble, lose balance, drop things, panic, recover, and escape… or you don’t.
+
+---
+
+## 🔧 Core Design Pillars
+
+- **Physics first**  
+  Weight, torque, leverage, and gravity matter.
+
+- **Unforgiving interaction**  
+  If you place an object badly, it falls.  
+  If you hold a rifle with one hand, it sinks.
+
+- **Movement through environment**  
+  You escape by climbing, pulling, vaulting, and improvising.
+
+- **Pressure, not power**  
+  Enemies exist to rush you forward, not to be farmed.
+
+---
+
+## 📦 Current State of the Project
+
+### ✅ Done
+- Repository created  
+- Core concept defined  
+- Tech stack decided  
+- Project structure planned  
+
+### 🚧 In Progress
+- Unity 6 project setup  
+- XR foundation planning  
+- Interaction and physics approach design  
+
+### ❌ Not Implemented Yet
+- Gameplay systems  
+- Weapons  
+- Climbing  
+- Enemies  
+- Levels  
+
+This is intentionally early. The foundation matters more than rushing features.
+
+---
+
+## 🔫 Planned Core Features
+
+### Weapon Physics
+- Rifle that becomes unstable when held with one hand  
+- Pistol holstered on the hip  
+- No artificial weapon stabilization  
+- Weapons can slide or fall if placed poorly  
+
+### Parkour & Climbing
+- Pulling yourself up using ledges, boxes, or props  
+- Climbing driven by actual forces, not snapping  
+- Slipping, overreaching, and bad grip are possible  
+
+### Enemies
 - Zombies or infected creatures  
-- You don’t stand and fight  
-- You **escape**
+- They apply pressure  
+- Standing still is the wrong choice  
 
-### 🎒 Inventory / Holsters
-- Rifle on your back  
-- Pistol on your hip  
-- Maybe a backpack for future items
-
----
-
-# 📦 Current State of the Project
-
-🚧 **Nothing is built yet.**  
-This README marks the beginning.  
-First steps will be setting up XR, basic interactions, and prototyping the weapon weight system.
+### Inventory / Holsters
+- Physical rifle back holster  
+- Hip pistol holster  
+- Possible backpack system later  
 
 ---
 
-# 🗺️ Roadmap (Early Stages)
+## 🗺️ Roadmap
 
-- Set up Unity 6 project  
-- Set up XR Interaction Toolkit (Quest 3 via Link)  
-- Basic rig, hands, and grabbing  
-- Implement rough weapon prefabs  
-- Basic climbing test with boxes  
+### Short Term
+- Unity 6 project initialized  
+- XR Interaction Toolkit setup (Quest 3)  
+- Basic XR rig and hands  
+- Grabbing and releasing objects  
+- First weapon weight prototype  
 
-### Later
-- Enemy AI  
-- Escape level  
-- Inventory  
-- Death / retry loop  
-- Scream internally  
+### Mid Term
+- Climbing prototype using physics  
+- Alley test environment  
+- Basic enemy pressure logic  
+- Failure and retry loop  
+
+### Long Term
+- Polished escape level  
+- Refined physics tuning  
+- Audio, tension, pacing  
+- Performance optimization  
+- Internal screaming  
 
 ---
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
+
 - Unity 6  
 - Meta Quest 3  
 - XR Interaction Toolkit  
 - Unity Input System  
+- Physics-driven interactions  
 
 ---
 
-# 🌟 Why This Exists
+## 🌟 Why This Project Exists
 
-Because parkour + physics + VR guns = chaotic fun.  
-And because making a VR game that’s unforgiving, heavy, and immersive feels more alive than yet another wave shooter.
+Because VR is at its best when it feels **physical**, **messy**, and **dangerous**.  
+Because climbing while holding a rifle should be a terrible idea.  
+And because escaping by improvisation is more interesting than standing still and shooting waves.
+
+This project is about **weight, panic, and motion**, not comfort.
