@@ -54,8 +54,8 @@ public class TapFloorCalibrator : MonoBehaviour
     [SerializeField]
     private float smooth = 12f;                    
 
-    [SerializeField]
-    private float hapticStrength = 0.1f;           
+    // [SerializeField]
+    // private float hapticStrength = 0.1f;           
 
     [SerializeField]
     private float successHapticStrength = 0.3f;    
@@ -71,8 +71,8 @@ public class TapFloorCalibrator : MonoBehaviour
     #region Current State (What Is Happening Right Now)
     private Transform bestController;
     
-    private const float ControllerLowOffset = 0.6f;
-    private const float DownwardSpeedThreshold = 0.003f;
+    private const float controllerLowOffset = 0.6f;
+    private const float downwardSpeedThreshold = 0.003f;
 
     private float targetOffset = 0f;
 
@@ -273,10 +273,10 @@ public class TapFloorCalibrator : MonoBehaviour
         float downSpeed = lastY - currentY; // positive = going down
 
         bool isStable = move < stabilityThreshold;
-        bool isLow = currentY < headY - ControllerLowOffset;
+        bool isLow = currentY < headY - controllerLowOffset;
 
         // track downward motion
-        if (downSpeed > DownwardSpeedThreshold)
+        if (downSpeed > downwardSpeedThreshold)
             downwardTime += Time.deltaTime;
         else
             downwardTime = 0f;

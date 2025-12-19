@@ -395,7 +395,7 @@ public class SequentialRebinder : MonoBehaviour
         }
 
         NormalizeVrCanvas(canvas);
-        NormalizeUiHierarchy(canvas.transform);
+        UICanvasUtility.NormalizeRectTransformScales(canvas.transform);
 
         instructionText = CreateText(
             canvas.transform,
@@ -440,11 +440,7 @@ public class SequentialRebinder : MonoBehaviour
 
         tmp.text = initialText;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.textWrappingMode = TextWrappingModes.Normal;
-
-        tmp.enableAutoSizing = true;
-        tmp.fontSizeMin = 18;
-        tmp.fontSizeMax = maxFontSize;
+        UICanvasUtility.ConfigureAutoSizingText(tmp, 18f, maxFontSize);
         
         tmp.color = Color.black;
 
@@ -497,23 +493,19 @@ public class SequentialRebinder : MonoBehaviour
     
     private void NormalizeVrCanvas(Canvas canvas)
     {
-        canvas.renderMode = RenderMode.WorldSpace;
-        canvas.worldCamera = Camera.main;
+        Camera camera = Camera.main;
 
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+        // Single source of truth for VR menu sizing/positioning to prevent scale drift.
+        UICanvasUtility.ConfigureWorldSpaceCanvas(
+            canvas,
+            camera,
+            UICanvasUtility.defaultCanvasSize,
+            UICanvasUtility.CanvasMetersPerPixel,
+            UICanvasUtility.DefaultDistance,
+            UICanvasUtility.DefaultVerticalOffset
+        );
 
-        canvasRect.localScale = Vector3.one * vrCanvasScale;
-        canvasRect.localPosition = new Vector3(0f, -0.15f, 0.6f);
-        canvasRect.localRotation = Quaternion.identity;
-        canvasRect.sizeDelta = new Vector2(800f, 600f);
-
-        CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
-        if (scaler == null)
-            scaler = canvas.gameObject.AddComponent<CanvasScaler>();
-
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
-        scaler.dynamicPixelsPerUnit = 1f;
-        scaler.referencePixelsPerUnit = 100f;
+        UICanvasUtility.ScaleChildrenRelativeToCanvas(canvas);
     }
 
     private void NormalizeUiHierarchy(Transform root)
