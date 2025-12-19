@@ -4,12 +4,15 @@ using UnityEngine.XR.Interaction.Toolkit.Interactors;
 public class LaserPointer : MonoBehaviour
 {
     #region Inspector Stuff (Ray Visuals)
+    [Tooltip("Ray interactor driving the laser. Auto-resolved on this object if left empty.")]
     [SerializeField]
     private XRRayInteractor ray;
 
+    [Tooltip("Line renderer used to draw the laser. Auto-resolved on this object if left empty.")]
     [SerializeField]
     private LineRenderer line;
 
+    [Tooltip("Optional dot shown at the hit point. Assign if you want a visible hit marker.")]
     [SerializeField]
     private Transform pointerDot; // Visual indicator only, kept in Inspector for UI placement
 
@@ -29,6 +32,13 @@ public class LaserPointer : MonoBehaviour
     {
         ray ??= GetComponent<XRRayInteractor>();
         line ??= GetComponent<LineRenderer>();
+
+        if (ray == null || line == null)
+        {
+            Debug.LogError($"LaserPointer on {name} requires XRRayInteractor and LineRenderer. Disabling.");
+            enabled = false;
+            return;
+        }
 
         // Prevent billboard “flat plane” look
         line.alignment = LineAlignment.TransformZ;

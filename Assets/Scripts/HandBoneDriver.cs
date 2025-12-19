@@ -7,6 +7,7 @@ using UnityEditor;
 public class HandBoneDriver : MonoBehaviour
 {
     #region Inspector Stuff (Hand Configuration)
+    [Tooltip("Defines which controller drives the bone naming prefix for auto-assign.")]
     [SerializeField]
     private XRNode handNode;
 
@@ -75,6 +76,8 @@ public class HandBoneDriver : MonoBehaviour
         thumb.bone1 = FindBone(prefix + "ThumbProximal");
         thumb.bone2 = FindBone(prefix + "ThumbDistal");
         thumb.bone3 = FindBone(prefix + "ThumbTip");
+
+        ValidateAssignments(prefix);
     }
 
     private void AssignFinger(FingerBones f, string prefix, string name)
@@ -89,6 +92,24 @@ public class HandBoneDriver : MonoBehaviour
         foreach (Transform t in GetComponentsInChildren<Transform>(true))
             if (t.name == name) return t;
         return null;
+    }
+
+    private void ValidateAssignments(string prefix)
+    {
+        ValidateFinger(index, prefix, "Index");
+        ValidateFinger(middle, prefix, "Middle");
+        ValidateFinger(ring, prefix, "Ring");
+        ValidateFinger(little, prefix, "Little");
+        ValidateFinger(thumb, prefix, "Thumb");
+    }
+
+    private void ValidateFinger(FingerBones f, string prefix, string fingerName)
+    {
+        if (f.bone1 == null || f.bone2 == null || f.bone3 == null)
+        {
+            Debug.LogWarning(
+                $"HandBoneDriver on {gameObject.name} is missing bones for {prefix}{fingerName}. Check rig naming or hierarchy.");
+        }
     }
 
     private void Update()

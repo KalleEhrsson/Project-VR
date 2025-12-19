@@ -6,18 +6,23 @@ using TMPro;
 public class RebindButton : MonoBehaviour
 {
     #region Inspector Stuff (UI And Binding Info)
+    [Tooltip("Name of the input action to rebind.")]
     [SerializeField]
     private string actionName;
 
+    [Tooltip("Index of the binding to rebind on the action.")]
     [SerializeField]
     private int bindingIndex = 0;
 
+    [Tooltip("Label that displays the current binding.")]
     [SerializeField]
     private TextMeshProUGUI label; // UI text for showing the current binding
 
+    [Tooltip("Button that triggers rebinding. Auto-resolved from this object if left empty.")]
     [SerializeField]
     private Button button; // UI button that triggers rebinding
 
+    [Tooltip("Keybind manager used to access input actions. Auto-resolved from parent if left empty.")]
     [SerializeField]
     private KeybindManager manager; // Resolved at runtime if not assigned for convenience
     #endregion
@@ -32,10 +37,22 @@ public class RebindButton : MonoBehaviour
         button ??= GetComponent<Button>();
         label ??= GetComponentInChildren<TextMeshProUGUI>();
         manager ??= GetComponentInParent<KeybindManager>();
+
+        if (button == null)
+        {
+            Debug.LogError($"RebindButton on {name} requires a Button component. Disabling.");
+            enabled = false;
+        }
+
+        if (label == null)
+            Debug.LogWarning($"RebindButton on {name} has no label assigned.");
     }
 
     private void Start()
     {
+        if (!enabled)
+            return;
+
         UpdateLabel();
         button.onClick.AddListener(StartRebind);
     }
