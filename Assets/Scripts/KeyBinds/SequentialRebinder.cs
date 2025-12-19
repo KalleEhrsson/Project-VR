@@ -42,6 +42,8 @@ public class SequentialRebinder : MonoBehaviour
     [Tooltip("UI event fired when a conflict is detected.")]
     [SerializeField]
     private UnityEvent<string> onConflictDetected;
+    
+    private const float vrCanvasScale = 0.01f;
 
     #endregion
 
@@ -87,7 +89,6 @@ public class SequentialRebinder : MonoBehaviour
     private void Awake()
     {
         inputActions ??= GetComponent<PlayerInput>()?.actions;
-        ValidateReferences();
         InitializePauseAction();
         BuildDefaultRebindSequence();
         LoadSavedBindings();
@@ -240,18 +241,6 @@ public class SequentialRebinder : MonoBehaviour
 
     #endregion
 
-    #region Validation (Runtime Safety)
-    private void ValidateReferences()
-    {
-        if (inputActions == null)
-            Debug.LogWarning("SequentialRebinder has no InputActionAsset assigned. Rebinding will be limited.");
-        if (instructionText == null)
-            Debug.LogWarning("SequentialRebinder is missing an instruction text reference.");
-        if (conflictWarningText == null)
-            Debug.LogWarning("SequentialRebinder is missing a conflict warning text reference.");
-    }
-    #endregion
-
     #region Rebind Callbacks (When Input Is Pressed Or Canceled)
 
     private void OnRebindComplete(
@@ -401,10 +390,12 @@ public class SequentialRebinder : MonoBehaviour
         {
             GameObject canvasGo = new GameObject("RebindCanvas");
             canvas = canvasGo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasGo.AddComponent<CanvasScaler>();
             canvasGo.AddComponent<GraphicRaycaster>();
         }
+
+        NormalizeVrCanvas(canvas);
+        NormalizeUiHierarchy(canvas.transform);
 
         instructionText = CreateText(
             canvas.transform,
@@ -423,17 +414,18 @@ public class SequentialRebinder : MonoBehaviour
         );
 
         conflictWarningText.color = Color.red;
-        
+
         instructionText.gameObject.SetActive(false);
         conflictWarningText.gameObject.SetActive(false);
     }
+
 
     private TextMeshProUGUI CreateText(
         Transform parent,
         string objectName,
         Vector2 anchor,
         string initialText,
-        int fontSize)
+        float maxFontSize)
     {
         GameObject go = new GameObject(objectName);
         go.transform.SetParent(parent, false);
@@ -444,12 +436,17 @@ public class SequentialRebinder : MonoBehaviour
         rect.anchorMin = anchor;
         rect.anchorMax = anchor;
         rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(800, 100);
+        rect.sizeDelta = new Vector2(600, 120);
 
         tmp.text = initialText;
-        tmp.fontSize = fontSize;
         tmp.alignment = TextAlignmentOptions.Center;
-        tmp.textWrappingMode = TextWrappingModes.NoWrap;
+        tmp.textWrappingMode = TextWrappingModes.Normal;
+
+        tmp.enableAutoSizing = true;
+        tmp.fontSizeMin = 18;
+        tmp.fontSizeMax = maxFontSize;
+        
+        tmp.color = Color.black;
 
         return tmp;
     }
@@ -496,6 +493,35 @@ public class SequentialRebinder : MonoBehaviour
             conflictWarningText.text = message;
 
         onConflictDetected?.Invoke(message);
+    }
+    
+    private void NormalizeVrCanvas(Canvas canvas)
+    {
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvas.worldCamera = Camera.main;
+
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+
+        canvasRect.localScale = Vector3.one * vrCanvasScale;
+        canvasRect.localPosition = new Vector3(0f, -0.15f, 0.6f);
+        canvasRect.localRotation = Quaternion.identity;
+        canvasRect.sizeDelta = new Vector2(800f, 600f);
+
+        CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+        if (scaler == null)
+            scaler = canvas.gameObject.AddComponent<CanvasScaler>();
+
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+        scaler.dynamicPixelsPerUnit = 1f;
+        scaler.referencePixelsPerUnit = 100f;
+    }
+
+    private void NormalizeUiHierarchy(Transform root)
+    {
+        foreach (RectTransform rect in root.GetComponentsInChildren<RectTransform>(true))
+        {
+            rect.localScale = Vector3.one;
+        }
     }
 
     #endregion

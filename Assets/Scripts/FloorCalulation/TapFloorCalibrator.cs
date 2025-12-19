@@ -7,6 +7,7 @@ using UnityEngine.XR;
 public class TapFloorCalibrator : MonoBehaviour
 {
     #region Inspector Stuff (Rig And Scene References)
+    
     [Tooltip("XR Origin for the player rig. Auto-resolved from parents if left empty.")]
     [SerializeField]
     private XROrigin xrOrigin;
@@ -69,6 +70,9 @@ public class TapFloorCalibrator : MonoBehaviour
 
     #region Current State (What Is Happening Right Now)
     private Transform bestController;
+    
+    private const float ControllerLowOffset = 0.6f;
+    private const float DownwardSpeedThreshold = 0.003f;
 
     private float targetOffset = 0f;
 
@@ -90,10 +94,12 @@ public class TapFloorCalibrator : MonoBehaviour
     private readonly Color gizmoIdle = Color.red;
     private readonly Color gizmoTouch = Color.blue;
     private readonly Color gizmoCalibrated = Color.green;
+    
     #endregion
 
 
     #region Unity Lifetime (Awake Start)
+    
     private void Awake()
     {
         xrOrigin ??= GetComponentInParent<XROrigin>();
@@ -154,48 +160,21 @@ public class TapFloorCalibrator : MonoBehaviour
 
         float headY = xrOrigin.Camera.transform.position.y;
 
-        // LEFT CONTROLLER
-        float leftY = leftController.position.y;
-        float leftMove = Mathf.Abs(leftY - lastLeftY);
-        float leftDownSpeed = lastLeftY - leftY; // positive = going down
+        float leftY = UpdateControllerState(
+            leftController,
+            headY,
+            ref lastLeftY,
+            ref leftStableTime,
+            ref leftDownwardTime
+        );
 
-        bool leftStable = leftMove < stabilityThreshold;
-        bool leftLow = leftY < headY - 0.6f;
-
-        // track downward motion
-        if (leftDownSpeed > 0.003f)
-            leftDownwardTime += Time.deltaTime;
-        else
-            leftDownwardTime = 0f;
-
-        // only start stability timer if it moved downward first
-        if (leftLow && leftStable && leftDownwardTime > downwardRequired)
-            leftStableTime += Time.deltaTime;
-        else
-            leftStableTime = 0f;
-
-        lastLeftY = leftY;
-
-
-        // RIGHT CONTROLLER
-        float rightY = rightController.position.y;
-        float rightMove = Mathf.Abs(rightY - lastRightY);
-        float rightDownSpeed = lastRightY - rightY;
-
-        bool rightStable = rightMove < stabilityThreshold;
-        bool rightLow = rightY < headY - 0.6f;
-
-        if (rightDownSpeed > 0.003f)
-            rightDownwardTime += Time.deltaTime;
-        else
-            rightDownwardTime = 0f;
-
-        if (rightLow && rightStable && rightDownwardTime > downwardRequired)
-            rightStableTime += Time.deltaTime;
-        else
-            rightStableTime = 0f;
-
-        lastRightY = rightY;
+        float rightY = UpdateControllerState(
+            rightController,
+            headY,
+            ref lastRightY,
+            ref rightStableTime,
+            ref rightDownwardTime
+        );
 
         // Pick the better (lowest) controller automatically
         bestController = leftY < rightY ? leftController : rightController;
@@ -279,8 +258,41 @@ public class TapFloorCalibrator : MonoBehaviour
     }
 
     #endregion
+    
+    #region Controller Tracking
 
+    private float UpdateControllerState(
+        Transform controller,
+        float headY,
+        ref float lastY,
+        ref float stableTime,
+        ref float downwardTime)
+    {
+        float currentY = controller.position.y;
+        float move = Mathf.Abs(currentY - lastY);
+        float downSpeed = lastY - currentY; // positive = going down
 
+        bool isStable = move < stabilityThreshold;
+        bool isLow = currentY < headY - ControllerLowOffset;
+
+        // track downward motion
+        if (downSpeed > DownwardSpeedThreshold)
+            downwardTime += Time.deltaTime;
+        else
+            downwardTime = 0f;
+
+        // only start stability timer if it moved downward first
+        if (isLow && isStable && downwardTime > downwardRequired)
+            stableTime += Time.deltaTime;
+        else
+            stableTime = 0f;
+
+        lastY = currentY;
+        return currentY;
+    }
+
+    #endregion
+    
     #region Haptics + Audio
 
     private void SendHaptics(float amplitude, float duration)
@@ -350,8 +362,7 @@ public class TapFloorCalibrator : MonoBehaviour
     }
 
     #endregion
-
-
+    
     #region Gizmos
 
     private void OnDrawGizmos()

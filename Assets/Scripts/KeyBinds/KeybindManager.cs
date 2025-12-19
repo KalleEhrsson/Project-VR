@@ -10,6 +10,8 @@ public class KeybindManager : MonoBehaviour
     private InputActionAsset actions; // Falls back to PlayerInput actions if not assigned
     
     public InputActionAsset Actions => actions;
+    
+    #endregion
 
     #region Public Entry Points (Called From UI)
     // Save a single binding override
@@ -32,6 +34,7 @@ public class KeybindManager : MonoBehaviour
             }
         }
     }
+    
     #endregion
 
     #region Unity Lifetime (Awake Enable Disable Destroy)

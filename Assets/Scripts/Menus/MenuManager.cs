@@ -117,10 +117,16 @@ public class MenuManager : MonoBehaviour
     public void BeginControlRebind()
     {
         if (rebindManager != null)
+        {
+            UpdateBackButton();
             rebindManager.StartRebindSequence();
+        }
         else
+        {
             Debug.LogWarning("SequentialRebinder reference is not assigned on MenuManager.");
+        }
     }
+
     #endregion
 
     #region Helpers (Small Utility Functions)
