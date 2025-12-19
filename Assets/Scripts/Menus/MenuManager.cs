@@ -4,21 +4,29 @@ using UnityEngine.SceneManagement;
 public class MenuManager : MonoBehaviour
 {
     #region Inspector Stuff (UI Panels And Helpers)
+    [Header("UI Panels")]
+    [Tooltip("Root panel for the main menu. Must be assigned because layout differs per scene.")]
     [SerializeField]
-    private GameObject mainPanel;          
+    private GameObject mainPanel;
 
+    [Tooltip("Root panel for settings. Must be assigned because layout differs per scene.")]
     [SerializeField]
-    private GameObject settingsPanel;      
+    private GameObject settingsPanel;
 
+    [Tooltip("Back button object that is shown when leaving the main panel.")]
     [SerializeField]
-    private GameObject backButton;         
+    private GameObject backButton;
 
+    [Tooltip("Sub-panels within settings. Manual assignment preserves menu layout flexibility.")]
     [SerializeField]
-    private GameObject[] subPanels;        
+    private GameObject[] subPanels;
 
+    [Header("Optional Helpers")]
+    [Tooltip("Tab manager used for sub-panel switching. Auto-resolved if left empty.")]
     [SerializeField]
     private TabManager tabManager; // UI-only reference kept serialized for menu wiring
 
+    [Tooltip("Rebind manager used for control rebinding. Auto-resolved if left empty.")]
     [SerializeField]
     private SequentialRebinder rebindManager;
     #endregion
@@ -32,6 +40,10 @@ public class MenuManager : MonoBehaviour
     {
         // Auto-find the locomotion blocker in the scene
         locomotionBlocker = FindFirstObjectByType<LocomotionInputBlocker>();
+        tabManager ??= GetComponentInChildren<TabManager>(true);
+        rebindManager ??= GetComponentInChildren<SequentialRebinder>(true);
+
+        ValidateReferences();
 
         if (locomotionBlocker == null)
             Debug.LogWarning("LocomotionInputBlocker was not found in the scene.");
@@ -39,6 +51,9 @@ public class MenuManager : MonoBehaviour
     
     private void Start()
     {
+        if (!ArePanelsValid())
+            return;
+
         if (locomotionBlocker != null)
             locomotionBlocker.DisableLocomotion();
 
@@ -120,6 +135,35 @@ public class MenuManager : MonoBehaviour
 
         // Settings or sub-panel → show it
         backButton.SetActive(true);
+    }
+    #endregion
+
+    #region Validation (Runtime Safety)
+    private void ValidateReferences()
+    {
+        if (mainPanel == null)
+            Debug.LogError("MenuManager requires Main Panel assignment.");
+        if (settingsPanel == null)
+            Debug.LogError("MenuManager requires Settings Panel assignment.");
+        if (backButton == null)
+            Debug.LogError("MenuManager requires Back Button assignment.");
+        if (subPanels == null)
+            Debug.LogWarning("MenuManager has no sub-panels assigned.");
+    }
+
+    private bool ArePanelsValid()
+    {
+        if (mainPanel == null || settingsPanel == null || backButton == null)
+        {
+            Debug.LogError("MenuManager missing required panel references. Disabling.");
+            enabled = false;
+            return false;
+        }
+
+        if (subPanels == null)
+            subPanels = new GameObject[0];
+
+        return true;
     }
     #endregion
 }

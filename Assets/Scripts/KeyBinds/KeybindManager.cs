@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class KeybindManager : MonoBehaviour
 {
     #region Inspector Stuff (Input Actions)
+    [Tooltip("Input actions to save and load bindings for. Auto-resolved from PlayerInput if left empty.")]
     [SerializeField]
     private InputActionAsset actions; // Falls back to PlayerInput actions if not assigned
     #endregion
@@ -37,7 +38,10 @@ public class KeybindManager : MonoBehaviour
     {
         actions ??= GetComponent<PlayerInput>()?.actions;
         if (actions == null)
+        {
+            Debug.LogWarning($"KeybindManager on {name} has no InputActionAsset assigned.");
             return;
+        }
 
         foreach (var map in actions.actionMaps)
         {

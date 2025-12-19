@@ -27,18 +27,23 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Inspector Stuff (UI And Assets)
 
+    [Tooltip("Input actions to rebind. Auto-resolved from PlayerInput if left empty.")]
     [SerializeField]
     private InputActionAsset inputActions; // Falls back to PlayerInput actions when available
 
+    [Tooltip("Instruction label used during rebinding.")]
     [SerializeField]
     private TextMeshProUGUI instructionText;
 
+    [Tooltip("Warning label used when a binding conflicts.")]
     [SerializeField]
     private TextMeshProUGUI conflictWarningText;
 
+    [Tooltip("UI event fired when instruction text changes.")]
     [SerializeField]
     private UnityEvent<string> onInstructionChanged;
 
+    [Tooltip("UI event fired when a conflict is detected.")]
     [SerializeField]
     private UnityEvent<string> onConflictDetected;
 
@@ -86,6 +91,7 @@ public class SequentialRebinder : MonoBehaviour
     private void Awake()
     {
         inputActions ??= GetComponent<PlayerInput>()?.actions;
+        ValidateReferences();
         InitializePauseAction();
         BuildDefaultRebindSequence();
         LoadSavedBindings();
@@ -224,6 +230,18 @@ public class SequentialRebinder : MonoBehaviour
         UpdateInstruction("Rebinding complete.");
     }
 
+    #endregion
+
+    #region Validation (Runtime Safety)
+    private void ValidateReferences()
+    {
+        if (inputActions == null)
+            Debug.LogWarning("SequentialRebinder has no InputActionAsset assigned. Rebinding will be limited.");
+        if (instructionText == null)
+            Debug.LogWarning("SequentialRebinder is missing an instruction text reference.");
+        if (conflictWarningText == null)
+            Debug.LogWarning("SequentialRebinder is missing a conflict warning text reference.");
+    }
     #endregion
 
     #region Rebind Callbacks (When Input Is Pressed Or Canceled)

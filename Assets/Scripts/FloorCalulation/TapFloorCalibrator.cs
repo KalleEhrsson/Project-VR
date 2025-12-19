@@ -7,27 +7,35 @@ using UnityEngine.XR;
 public class TapFloorCalibrator : MonoBehaviour
 {
     #region Inspector Stuff (Rig And Scene References)
+    [Tooltip("XR Origin for the player rig. Auto-resolved from parents if left empty.")]
     [SerializeField]
     private XROrigin xrOrigin;
 
+    [Tooltip("Camera offset transform used for floor height adjustments. Auto-resolved from XR Origin.")]
     [SerializeField]
     private Transform cameraOffset; // Populated from XR Origin if left empty
     
+    [Tooltip("Optional visual marker for the calibrated floor height.")]
     [SerializeField]
     private Transform gameFloorMarker;   // visual marker or debug plane
 
+    [Tooltip("Optional gameplay floor collider that should match the calibrated height.")]
     [SerializeField]
     private Transform gameFloorCollider; // the real floor for gameplay
 
+    [Tooltip("Left controller transform. Must be assigned because controller objects differ per rig.")]
     [SerializeField]
     private Transform leftController; // Kept serialized because controller objects differ per rig
 
+    [Tooltip("Right controller transform. Must be assigned because controller objects differ per rig.")]
     [SerializeField]
     private Transform rightController; // Kept serialized because controller objects differ per rig
 
+    [Tooltip("Audio source used for feedback. Auto-resolved from this object if left empty.")]
     [SerializeField]
     private AudioSource audioSource; // Scene audio source for feedback
 
+    [Tooltip("Audio clip played on successful calibration.")]
     [SerializeField]
     private AudioClip dingClip;
 
@@ -93,6 +101,9 @@ public class TapFloorCalibrator : MonoBehaviour
             cameraOffset = xrOrigin.CameraFloorOffsetObject != null
                 ? xrOrigin.CameraFloorOffsetObject.transform
                 : xrOrigin.transform;
+
+        audioSource ??= GetComponent<AudioSource>();
+        ValidateReferences();
     }
 
     private void Start()
@@ -111,6 +122,9 @@ public class TapFloorCalibrator : MonoBehaviour
 
     public void BeginCalibration()
     {
+        if (!AreReferencesValid())
+            return;
+
         waitingForTouch = true;
         calibrated = false;
 
@@ -130,6 +144,9 @@ public class TapFloorCalibrator : MonoBehaviour
 
     private void Update()
     {
+        if (!AreReferencesValid())
+            return;
+
         SmoothMove();
 
         if (!waitingForTouch)
@@ -355,5 +372,34 @@ public class TapFloorCalibrator : MonoBehaviour
         Gizmos.DrawWireCube(floorPoint, new Vector3(0.1f, 0.002f, 0.1f));
     }
 
+    #endregion
+
+    #region Validation (Runtime Safety)
+    private void ValidateReferences()
+    {
+        if (xrOrigin == null)
+            Debug.LogError("TapFloorCalibrator requires an XR Origin.");
+        if (cameraOffset == null)
+            Debug.LogError("TapFloorCalibrator requires a camera offset transform.");
+        if (leftController == null)
+            Debug.LogError("TapFloorCalibrator requires a left controller transform.");
+        if (rightController == null)
+            Debug.LogError("TapFloorCalibrator requires a right controller transform.");
+        if (audioSource == null)
+            Debug.LogWarning("TapFloorCalibrator has no audio source for ding feedback.");
+        if (dingClip == null)
+            Debug.LogWarning("TapFloorCalibrator has no ding audio clip assigned.");
+    }
+
+    private bool AreReferencesValid()
+    {
+        if (xrOrigin == null || cameraOffset == null || leftController == null || rightController == null)
+        {
+            enabled = false;
+            return false;
+        }
+
+        return true;
+    }
     #endregion
 }

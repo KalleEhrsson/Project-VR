@@ -4,9 +4,11 @@ using UnityEngine.InputSystem;
 public class Locomotion : MonoBehaviour
 {
     #region Inspector Stuff (Input And Rig References)
+    [Tooltip("Move input action for locomotion. Must be assigned per input setup.")]
     [SerializeField]
     private InputActionProperty moveAction; // Kept serialized because movement bindings differ between action maps
 
+    [Tooltip("Head transform used to orient movement. Auto-resolved from Camera.main if left empty.")]
     [SerializeField]
     private Transform head; // Visual rig reference required for correct locomotion heading
     #endregion
@@ -24,20 +26,36 @@ public class Locomotion : MonoBehaviour
     private void Awake()
     {
         head ??= Camera.main != null ? Camera.main.transform : null;
+        if (head == null)
+        {
+            Debug.LogError($"Locomotion on {name} requires a head transform or a Camera tagged MainCamera.");
+            enabled = false;
+        }
     }
 
     private void Start()
     {
         cc = GetComponent<CharacterController>();
+        if (cc == null)
+        {
+            Debug.LogError($"Locomotion on {name} requires a CharacterController.");
+            enabled = false;
+            return;
+        }
 
         if (moveAction.action != null)
             moveAction.action.Enable(); // important for XR sample actions
+        else
+            Debug.LogWarning($"Locomotion on {name} is missing move input action.");
     }
     #endregion
 
     #region Main Logic (What Actually Happens)
     private void Update()
     {
+        if (!enabled || cc == null || head == null)
+            return;
+
         if (moveAction.action == null)
             return;
 
