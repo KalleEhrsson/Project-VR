@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using TMPro;
+using UnityEngine.UI;
 
 public class SequentialRebinder : MonoBehaviour
 {
@@ -30,10 +31,7 @@ public class SequentialRebinder : MonoBehaviour
     [SerializeField]
     private InputActionAsset inputActions; // Falls back to PlayerInput actions when available
 
-    [SerializeField]
     private TextMeshProUGUI instructionText;
-
-    [SerializeField]
     private TextMeshProUGUI conflictWarningText;
 
     [SerializeField]
@@ -61,7 +59,7 @@ public class SequentialRebinder : MonoBehaviour
 
     #region Current State (What Is Happening Right Now)
 
-    private const string PlayerPrefsKey = "VRSequentialRebinder_Bindings";
+    private const string playerPrefsKey = "VRSequentialRebinder_Bindings";
 
     private readonly Dictionary<string, string> boundPathsByAction = new Dictionary<string, string>();
 
@@ -75,8 +73,8 @@ public class SequentialRebinder : MonoBehaviour
     private string currentInstruction = string.Empty;
     private string currentConflictWarning = string.Empty;
 
-    public string CurrentInstructionText => currentInstruction;
-    public string CurrentConflictWarningText => currentConflictWarning;
+    public string currentInstructionText => currentInstruction;
+    public string currentConflictWarningText => currentConflictWarning;
     public RebindState CurrentState => state;
 
     #endregion
@@ -89,6 +87,8 @@ public class SequentialRebinder : MonoBehaviour
         InitializePauseAction();
         BuildDefaultRebindSequence();
         LoadSavedBindings();
+
+        CreateRebindUI();
     }
 
     private void OnEnable()
@@ -115,6 +115,9 @@ public class SequentialRebinder : MonoBehaviour
 
     public void StartRebindSequence()
     {
+        instructionText.gameObject.SetActive(true);
+        conflictWarningText.gameObject.SetActive(true);
+        
         if (orderedActions == null || orderedActions.Count == 0)
         {
             UpdateInstruction("No actions configured for rebinding.");
@@ -145,6 +148,10 @@ public class SequentialRebinder : MonoBehaviour
         CancelRebindOperation();
         SaveBindings();
         state = RebindState.PausedOrExited;
+        
+        instructionText.gameObject.SetActive(false);
+        conflictWarningText.gameObject.SetActive(false);
+        
         UpdateInstruction("Rebinding canceled. Returning to menu.");
     }
 
@@ -196,7 +203,7 @@ public class SequentialRebinder : MonoBehaviour
             .WithControlsExcluding("*/trackingState")
             .WithControlsExcluding("*/menuButton")
             .WithControlsExcluding("*/touchpad")
-            .OnCancel(op => OnRebindCanceled(action, wasEnabled))
+            .OnCancel(_ => OnRebindCanceled(action, wasEnabled))
             .OnComplete(op => OnRebindComplete(op, entry, bindingIndex, wasEnabled));
 
         activeRebindingOperation.Start();
@@ -222,6 +229,9 @@ public class SequentialRebinder : MonoBehaviour
         SaveBindings();
         state = RebindState.Completed;
         UpdateInstruction("Rebinding complete.");
+        
+        instructionText.gameObject.SetActive(false);
+        conflictWarningText.gameObject.SetActive(false);
     }
 
     #endregion
@@ -332,8 +342,8 @@ public class SequentialRebinder : MonoBehaviour
 
         cachedAsset = asset;
 
-        if (PlayerPrefs.HasKey(PlayerPrefsKey))
-            asset.LoadBindingOverridesFromJson(PlayerPrefs.GetString(PlayerPrefsKey));
+        if (PlayerPrefs.HasKey(playerPrefsKey))
+            asset.LoadBindingOverridesFromJson(PlayerPrefs.GetString(playerPrefsKey));
     }
 
     private void SaveBindings()
@@ -343,7 +353,7 @@ public class SequentialRebinder : MonoBehaviour
             return;
 
         string json = asset.SaveBindingOverridesAsJson();
-        PlayerPrefs.SetString(PlayerPrefsKey, json);
+        PlayerPrefs.SetString(playerPrefsKey, json);
         PlayerPrefs.Save();
     }
 
@@ -365,6 +375,71 @@ public class SequentialRebinder : MonoBehaviour
 
     #endregion
 
+    #region Runtime UI Creation
+
+    private void CreateRebindUI()
+    {
+        Canvas canvas = FindFirstObjectByType<Canvas>();
+
+        if (canvas == null)
+        {
+            GameObject canvasGo = new GameObject("RebindCanvas");
+            canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGo.AddComponent<CanvasScaler>();
+            canvasGo.AddComponent<GraphicRaycaster>();
+        }
+
+        instructionText = CreateText(
+            canvas.transform,
+            "RebindInstructionText",
+            new Vector2(0.5f, 0.6f),
+            "Press a button",
+            36
+        );
+
+        conflictWarningText = CreateText(
+            canvas.transform,
+            "RebindConflictText",
+            new Vector2(0.5f, 0.5f),
+            "",
+            24
+        );
+
+        conflictWarningText.color = Color.red;
+        
+        instructionText.gameObject.SetActive(false);
+        conflictWarningText.gameObject.SetActive(false);
+    }
+
+    private TextMeshProUGUI CreateText(
+        Transform parent,
+        string objectName,
+        Vector2 anchor,
+        string initialText,
+        int fontSize)
+    {
+        GameObject go = new GameObject(objectName);
+        go.transform.SetParent(parent, false);
+
+        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
+        RectTransform rect = tmp.rectTransform;
+
+        rect.anchorMin = anchor;
+        rect.anchorMax = anchor;
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(800, 100);
+
+        tmp.text = initialText;
+        tmp.fontSize = fontSize;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.textWrappingMode = TextWrappingModes.NoWrap;
+
+        return tmp;
+    }
+
+    #endregion
+    
     #region Helpers (Small Utility Functions)
 
     private int GetPrimaryBindingIndex(InputAction action)

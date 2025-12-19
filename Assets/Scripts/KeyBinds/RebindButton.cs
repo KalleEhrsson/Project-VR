@@ -44,10 +44,10 @@ public class RebindButton : MonoBehaviour
     #region Main Logic (What Actually Happens)
     private void UpdateLabel()
     {
-        if (manager == null || manager.actions == null)
+        if (manager == null || manager.Actions == null)
             return;
 
-        var action = manager.actions.FindAction(actionName);
+        var action = manager.Actions.FindAction(actionName);
         if (action == null || label == null)
             return;
 
@@ -56,10 +56,10 @@ public class RebindButton : MonoBehaviour
 
     private void StartRebind()
     {
-        if (manager == null || manager.actions == null)
+        if (manager == null || manager.Actions == null)
             return;
 
-        var action = manager.actions.FindAction(actionName);
+        var action = manager.Actions.FindAction(actionName);
         if (action == null)
             return;
 

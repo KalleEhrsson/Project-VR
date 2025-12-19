@@ -104,7 +104,7 @@ public class MenuManager : MonoBehaviour
         if (rebindManager != null)
             rebindManager.StartRebindSequence();
         else
-            Debug.LogWarning("VRSequentialRebinder reference is not assigned on MenuManager.");
+            Debug.LogWarning("SequentialRebinder reference is not assigned on MenuManager.");
     }
     #endregion
 

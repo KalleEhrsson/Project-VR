@@ -325,13 +325,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1807596355}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
+      - m_Target: {fileID: 1807596356}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: BeginControlRebind
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1821,20 +1821,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &853700280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: XRI Left/Thumbstick
-  m_EditorClassIdentifier: 
-  m_Asset: {fileID: -944628639613478452, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  m_ActionId: c01850c4-700b-4ae6-a187-a894afef5bbd
 --- !u!114 &895114092
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2316,14 +2302,14 @@ MonoBehaviour:
   gameFloorCollider: {fileID: 0}
   leftController: {fileID: 1420184713}
   rightController: {fileID: 1420184706}
+  audioSource: {fileID: 1132153659}
+  dingClip: {fileID: 8300000, guid: 993495089608e014aa1ea35fcf0aa373, type: 3}
+  showGizmos: 1
   stabilityThreshold: 0.002
   holdTimeRequired: 1
   smooth: 12
-  audioSource: {fileID: 1132153659}
-  dingClip: {fileID: 8300000, guid: 993495089608e014aa1ea35fcf0aa373, type: 3}
   hapticStrength: 0.1
   successHapticStrength: 0.3
-  showGizmos: 1
   downwardRequired: 0.15
 --- !u!82 &1132153659
 AudioSource:
@@ -2884,8 +2870,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inputActions: {fileID: 0}
-  instructionText: {fileID: 0}
-  conflictWarningText: {fileID: 0}
   onInstructionChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -4116,9 +4100,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b599398dceca5b348bda9934db25471f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ray: {fileID: 0}
-  line: {fileID: 0}
-  pointerDot: {fileID: 0}
+  ray: {fileID: 1420184711}
+  line: {fileID: 1420184717}
+  pointerDot: {fileID: 892771625848212199, guid: 282a7b768534c8649a8175ff93b3d4f4, type: 3}
   maxDistance: 10
   smoothSpeed: 20
 --- !u!120 &1420184717
@@ -5673,7 +5657,7 @@ MonoBehaviour:
       m_Interactions: 
       m_SingletonActionBindings: []
       m_Flags: 0
-    m_Reference: {fileID: 853700280}
+    m_Reference: {fileID: 0}
   turnAction:
     m_UseReference: 0
     m_Action:

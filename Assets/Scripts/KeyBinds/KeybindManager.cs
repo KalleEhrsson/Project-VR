@@ -3,10 +3,10 @@ using UnityEngine.InputSystem;
 
 public class KeybindManager : MonoBehaviour
 {
-    #region Inspector Stuff (Input Actions)
     [SerializeField]
     private InputActionAsset actions; // Falls back to PlayerInput actions if not assigned
-    #endregion
+    
+    public InputActionAsset Actions => actions;
 
     #region Public Entry Points (Called From UI)
     // Save a single binding override
