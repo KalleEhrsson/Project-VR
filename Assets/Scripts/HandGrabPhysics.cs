@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class HandGrabPhysics : MonoBehaviour
 {
     #region Inspector Stuff (Input And Tunables)
+    [Tooltip("Input action used for grab. Must be assigned per input setup.")]
     [SerializeField]
     private InputActionProperty grabAction; // Kept serialized because actions come from scene-specific input assets
 
@@ -31,7 +32,17 @@ public class HandGrabPhysics : MonoBehaviour
     private void Awake()
     {
         handRb = GetComponent<Rigidbody>();
+        if (handRb == null)
+        {
+            Debug.LogError($"HandGrabPhysics on {name} requires a Rigidbody. Disabling.");
+            enabled = false;
+            return;
+        }
+
         handRb.isKinematic = true;
+
+        if (grabAction.action == null)
+            Debug.LogWarning($"HandGrabPhysics on {name} is missing grab input action.");
 
         Debug.Log("[Grab] Hand initialized");
     }
