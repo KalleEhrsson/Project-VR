@@ -56,6 +56,7 @@ You climb, scramble, lose balance, drop things, panic, recover, and escape… or
 - [ ] Quest build settings pass  
 - [ ] XR scene bootstrapping (rig + hands)  
 
+
 ### ❌ Not Implemented Yet
 - [ ] Gameplay systems  
 - [ ] Weapons  
