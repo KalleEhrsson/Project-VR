@@ -43,47 +43,54 @@ You climb, scramble, lose balance, drop things, panic, recover, and escape… or
 ## 📦 Current State of the Project
 
 ### ✅ Done
-- [x] Repository created  
-- [x] Core concept defined  
-- [x] Tech stack decided  
-- [x] Project structure planned  
-- [x] Unity 6 project setup  
+- [x] Unity 6 project setup with build scenes (MainMenu/Game)  
+- [x] XR packages installed (OpenXR, XR Interaction Toolkit, XR Hands, Input System, URP)  
+- [x] XR Plug-in Management configured with OpenXR loader  
+- [x] XR input actions asset with XR bindings  
+- [x] Custom rig prefab with hand drivers, bone curl, and locomotion in the Game scene  
+- [x] Physics grab system with grab points on weapon prefabs  
+- [x] Main menu scene with XR UI laser pointer + menu manager scripts  
 
 ### 🚧 In Progress
 **Legend:** ⏳ = active, ⛔ = blocked, 🧪 = working but unstable
 
 #### 🧠 Design / Planning
-- [ ] ⏳ XR foundation planning  
-  → Done when: key XR subsystems and constraints are agreed on
-- [ ] ⏳ Interaction and physics approach design  
-  → Done when: interaction model and physics rules are documented
+_No active design docs tracked yet._
 
 #### 🔧 Implementation
-- [ ] ⏳ Project settings baseline (rendering/input)  
-  → Done when: baseline settings are applied and verified in project
-- [ ] ⏳ XR scene bootstrapping (rig + hands)  
-  → Done when: rig + hands spawn and track in a test scene
+- [ ] ⏳ Floor calibration flow wired into the Game scene  
+  → Done when: TapFloorCalibrator is in-scene and updates the gameplay floor reliably
 
 #### 🧪 First-pass Integration
-- [ ] ⏳ Quest build settings pass  
-  → Done when: Quest build completes with baseline settings
+_No integration passes tracked yet._
 
 ### ❌ Not Implemented Yet
 #### 🧱 Core Gameplay Systems (Not Started)
-- [ ] Gameplay systems  
-- [ ] Weapons  
-- [ ] Climbing  
-- [ ] Enemies  
+- [ ] Weapon firing/reload/holsters  
+- [ ] Climbing/parkour movement  
+- [ ] Enemy AI/pressure systems  
+- [ ] Escape loop / fail-retry loop  
 
 #### 🧰 Supporting Systems (Later)
-- [ ] Levels  
+- [ ] Level blockout beyond the test plane  
 - [ ] Save/load pipeline  
 - [ ] Performance profiling pass  
+- [ ] Quest/Android build validation  
 
 ▶️ **Next Focus**
-- Align XR foundation decisions with scene bootstrapping
-- Validate baseline settings via a Quest build run
-- Define interaction/physics rules to unblock implementation
+- Wire the floor calibration flow into the Game scene
+- Run a Quest build with current OpenXR settings to validate tracking + input
+- Define the first weapon interaction milestone (pickup → aim → fire)
+
+### 🧾 Audit Notes
+- (DONE) XR packages installed: `Packages/manifest.json` includes OpenXR/XR Interaction Toolkit/XR Hands/Input System.  
+- (DONE) OpenXR loader configured: `Assets/XR/XRGeneralSettingsPerBuildTarget.asset` and `ProjectSettings/EditorBuildSettings.asset`.  
+- (DONE) XR input actions asset present with XR bindings: `Assets/InputSystem_Actions.inputactions`.  
+- (DONE) Game scene uses rig prefab: `Assets/Scenes/Game.unity` references `Assets/Prefabs/Rig.prefab`.  
+- (DONE) Rig prefab includes locomotion + hand drivers/bone curl: `Assets/Prefabs/Rig.prefab`, `Assets/Scripts/Locomotion.cs`, `Assets/Scripts/HandDriver.cs`, `Assets/Scripts/HandBoneDriver.cs`.  
+- (DONE) Physics grab system + grab points on weapons: `Assets/Scripts/HandGrabPhysics.cs`, `Assets/Scripts/GrabPoint.cs`, `Assets/Prefabs/Weapons/Rifle.prefab`.  
+- (DONE) Main menu XR UI scripts wired: `Assets/Scenes/MainMenu.unity` uses `Assets/Scripts/Menus/LaserPointer.cs` and `Assets/Scripts/Menus/MenuManager.cs`.  
+- (IN PROGRESS) Floor calibration script exists but is not wired into a scene: `Assets/Scripts/FloorCalculation/TapFloorCalibrator.cs`.  
 
 This is intentionally early. The foundation matters more than rushing features.
 
