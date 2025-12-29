@@ -394,8 +394,7 @@ public class SequentialRebinder : MonoBehaviour
             canvasGo.AddComponent<GraphicRaycaster>();
         }
 
-        NormalizeVrCanvas(canvas);
-        UICanvasUtility.NormalizeRectTransformScales(canvas.transform);
+        UICanvasUtility.ConfigureWorldSpaceCanvas(canvas, Camera.main);
 
         instructionText = CreateText(
             canvas.transform,
@@ -491,31 +490,6 @@ public class SequentialRebinder : MonoBehaviour
         onConflictDetected?.Invoke(message);
     }
     
-    private void NormalizeVrCanvas(Canvas canvas)
-    {
-        Camera camera = Camera.main;
-
-        // Single source of truth for VR menu sizing/positioning to prevent scale drift.
-        UICanvasUtility.ConfigureWorldSpaceCanvas(
-            canvas,
-            camera,
-            UICanvasUtility.defaultCanvasSize,
-            UICanvasUtility.CanvasMetersPerPixel,
-            UICanvasUtility.DefaultDistance,
-            UICanvasUtility.DefaultVerticalOffset
-        );
-
-        UICanvasUtility.ScaleChildrenRelativeToCanvas(canvas);
-    }
-
-    private void NormalizeUiHierarchy(Transform root)
-    {
-        foreach (RectTransform rect in root.GetComponentsInChildren<RectTransform>(true))
-        {
-            rect.localScale = Vector3.one;
-        }
-    }
-
     #endregion
 
     #region Auto Setup (No Inspector Clicking)
