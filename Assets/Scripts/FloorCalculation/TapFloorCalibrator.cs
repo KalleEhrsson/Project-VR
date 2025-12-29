@@ -253,8 +253,16 @@ public class TapFloorCalibrator : MonoBehaviour
     private void ApplyInstant(float offset)
     {
         targetOffset = offset;
+        RealFloorY = -offset;
+
         cameraOffset.localPosition =
             new Vector3(cameraOffset.localPosition.x, offset, cameraOffset.localPosition.z);
+
+        if (gameFloorMarker != null)
+            gameFloorMarker.position = new Vector3(gameFloorMarker.position.x, RealFloorY, gameFloorMarker.position.z);
+
+        if (gameFloorCollider != null)
+            gameFloorCollider.position = new Vector3(gameFloorCollider.position.x, RealFloorY, gameFloorCollider.position.z);
     }
 
     #endregion
