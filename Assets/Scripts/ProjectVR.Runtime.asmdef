@@ -1,11 +1,10 @@
 {
-  "name": "Tests.Editor",
+  "name": "ProjectVR.Runtime",
   "references": [
-    "ProjectVR.Runtime"
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
   ],
-  "includePlatforms": [
-    "Editor"
-  ],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
@@ -13,9 +12,5 @@
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
-  "noEngineReferences": false,
-  "optionalUnityReferences": [
-    "TestAssemblies"
-  ],
-  "testAssemblies": true
+  "noEngineReferences": false
 }
