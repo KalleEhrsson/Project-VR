@@ -68,6 +68,9 @@ public class RebindButton : MonoBehaviour
         if (action == null || label == null)
             return;
 
+        if (!IsBindingIndexValid(action))
+            return;
+
         label.text = action.bindings[bindingIndex].ToDisplayString();
     }
 
@@ -78,6 +81,9 @@ public class RebindButton : MonoBehaviour
 
         var action = manager.Actions.FindAction(actionName);
         if (action == null)
+            return;
+
+        if (!IsBindingIndexValid(action))
             return;
 
         button.interactable = false;
@@ -94,6 +100,27 @@ public class RebindButton : MonoBehaviour
                 UpdateLabel();
             })
             .Start();
+    }
+
+    private bool IsBindingIndexValid(InputAction action)
+    {
+        if (bindingIndex >= 0 && bindingIndex < action.bindings.Count)
+            return true;
+
+        Debug.LogWarning($"RebindButton on {name} has invalid binding index {bindingIndex} for action '{action.name}'. Disabling button.");
+        DisableButton();
+        return false;
+    }
+
+    private void DisableButton()
+    {
+        if (button != null)
+        {
+            button.interactable = false;
+            button.gameObject.SetActive(false);
+        }
+
+        enabled = false;
     }
     #endregion
 }
