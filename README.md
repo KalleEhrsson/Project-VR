@@ -83,14 +83,14 @@ _No integration passes tracked yet._
 - Define the first weapon interaction milestone (pickup → aim → fire)
 
 ### 🧾 Audit Notes
-- (DONE) XR packages installed: `Packages/manifest.json` includes OpenXR/XR Interaction Toolkit/XR Hands/Input System.  
-- (DONE) OpenXR loader configured: `Assets/XR/XRGeneralSettingsPerBuildTarget.asset` and `ProjectSettings/EditorBuildSettings.asset`.  
-- (DONE) XR input actions asset present with XR bindings: `Assets/InputSystem_Actions.inputactions`.  
-- (DONE) Game scene uses rig prefab: `Assets/Scenes/Game.unity` references `Assets/Prefabs/Rig.prefab`.  
-- (DONE) Rig prefab includes locomotion + hand drivers/bone curl: `Assets/Prefabs/Rig.prefab`, `Assets/Scripts/Locomotion.cs`, `Assets/Scripts/HandDriver.cs`, `Assets/Scripts/HandBoneDriver.cs`.  
-- (DONE) Physics grab system + grab points on weapons: `Assets/Scripts/HandGrabPhysics.cs`, `Assets/Scripts/GrabPoint.cs`, `Assets/Prefabs/Weapons/Rifle.prefab`.  
-- (DONE) Main menu XR UI scripts wired: `Assets/Scenes/MainMenu.unity` uses `Assets/Scripts/Menus/LaserPointer.cs` and `Assets/Scripts/Menus/MenuManager.cs`.  
-- (IN PROGRESS) Floor calibration script exists but is not wired into a scene: `Assets/Scripts/FloorCalculation/TapFloorCalibrator.cs`.  
+- (DONE) XR packages installed: `Packages/manifest.json` includes OpenXR/XR Interaction Toolkit/XR Hands/Input System.
+- (DONE) OpenXR loader configured: `Assets/XR/XRGeneralSettingsPerBuildTarget.asset` and `ProjectSettings/EditorBuildSettings.asset`.
+- (DONE) XR input actions asset present with XR bindings: `Assets/InputSystem_Actions.inputactions`.
+- (DONE) Game scene uses rig prefab: `Assets/Scenes/Game.unity` references `Assets/Prefabs/Rig.prefab`.
+- (DONE) Rig prefab includes locomotion + hand drivers/bone curl: `Assets/Prefabs/Rig.prefab`, `Assets/Scripts/Locomotion.cs`, `Assets/Scripts/HandDriver.cs`, `Assets/Scripts/HandBoneDriver.cs`.
+- (DONE) Physics grab system + grab points on weapons: `Assets/Scripts/HandGrabPhysics.cs`, `Assets/Scripts/GrabPoint.cs`, `Assets/Prefabs/Weapons/Rifle.prefab`.
+- (DONE) Main menu XR UI scripts wired: `Assets/Scenes/MainMenu.unity` uses `Assets/Scripts/Menus/LaserPointer.cs` and `Assets/Scripts/Menus/MenuManager.cs`.
+- (DONE) Floor calibration script is wired into MainMenu; a button triggers `BeginCalibration` in `Assets/Scripts/FloorCalculation/TapFloorCalibrator.cs`.
 
 This is intentionally early. The foundation matters more than rushing features.
 
