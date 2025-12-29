@@ -17,14 +17,27 @@ public class KeybindManager : MonoBehaviour
     // Save a single binding override
     public void SaveBinding(string actionName, int bindingIndex)
     {
-        var action = actions.FindAction(actionName);
+        if (!TryGetAction(actionName, out var action))
+        {
+            return;
+        }
+
+        if (bindingIndex < 0 || bindingIndex >= action.bindings.Count)
+        {
+            Debug.LogWarning($"Binding index {bindingIndex} is out of range for action {actionName}.");
+            return;
+        }
+        
         PlayerPrefs.SetString(actionName + bindingIndex, action.bindings[bindingIndex].overridePath);
     }
 
     // Load all overrides for one action
     public void LoadBinding(string actionName)
     {
-        var action = actions.FindAction(actionName);
+        if (!TryGetAction(actionName, out var action))
+        {
+            return;
+        }
         for (int i = 0; i < action.bindings.Count; i++)
         {
             string key = actionName + i;
@@ -53,6 +66,28 @@ public class KeybindManager : MonoBehaviour
             foreach (var action in map.actions)
                 LoadBinding(action.name);
         }
+    }
+    #endregion
+    
+    #region Helpers
+    private bool TryGetAction(string actionName, out InputAction action)
+    {
+        action = null;
+
+        if (actions == null)
+        {
+            Debug.LogWarning($"KeybindManager on {name} has no InputActionAsset assigned.");
+            return false;
+        }
+
+        action = actions.FindAction(actionName);
+        if (action == null)
+        {
+            Debug.LogWarning($"Action {actionName} was not found in InputActionAsset on {name}.");
+            return false;
+        }
+
+        return true;
     }
     #endregion
 }

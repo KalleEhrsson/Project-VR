@@ -48,6 +48,32 @@ public class UICanvasUtilityTests
     }
 
     [Test]
+    public void ConfigureWorldSpaceCanvas_AddsAndConfiguresCanvasScaler()
+    {
+        GameObject canvasObject = CreateGameObject("Canvas");
+        Canvas canvas = canvasObject.AddComponent<Canvas>();
+
+        GameObject cameraObject = CreateGameObject("Camera");
+        Camera camera = cameraObject.AddComponent<Camera>();
+
+        UICanvasUtility.ConfigureWorldSpaceCanvas(
+            canvas,
+            camera,
+            new Vector2(120f, 80f),
+            0.0025f,
+            1.2f,
+            -0.3f);
+
+        CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+
+        Assert.That(scaler, Is.Not.Null);
+        Assert.That(scaler.uiScaleMode, Is.EqualTo(CanvasScaler.ScaleMode.ConstantPixelSize));
+        Assert.That(scaler.scaleFactor, Is.EqualTo(1f));
+        Assert.That(scaler.dynamicPixelsPerUnit, Is.EqualTo(10f));
+        Assert.That(scaler.referencePixelsPerUnit, Is.EqualTo(100f));
+    }
+    
+    [Test]
     public void ScaleChildrenRelativeToCanvas_NormalizesChildSizeAgainstCanvas()
     {
         GameObject canvasObject = CreateGameObject("Canvas");
