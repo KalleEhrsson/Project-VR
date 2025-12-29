@@ -50,21 +50,40 @@ You climb, scramble, lose balance, drop things, panic, recover, and escape… or
 - [x] Unity 6 project setup  
 
 ### 🚧 In Progress
-- [ ] XR foundation planning  
-- [ ] Interaction and physics approach design  
-- [ ] Project settings baseline (rendering/input)  
-- [ ] Quest build settings pass  
-- [ ] XR scene bootstrapping (rig + hands)  
+**Legend:** ⏳ = active, ⛔ = blocked, 🧪 = working but unstable
 
+#### 🧠 Design / Planning
+- [ ] ⏳ XR foundation planning  
+  → Done when: key XR subsystems and constraints are agreed on
+- [ ] ⏳ Interaction and physics approach design  
+  → Done when: interaction model and physics rules are documented
+
+#### 🔧 Implementation
+- [ ] ⏳ Project settings baseline (rendering/input)  
+  → Done when: baseline settings are applied and verified in project
+- [ ] ⏳ XR scene bootstrapping (rig + hands)  
+  → Done when: rig + hands spawn and track in a test scene
+
+#### 🧪 First-pass Integration
+- [ ] ⏳ Quest build settings pass  
+  → Done when: Quest build completes with baseline settings
 
 ### ❌ Not Implemented Yet
+#### 🧱 Core Gameplay Systems (Not Started)
 - [ ] Gameplay systems  
 - [ ] Weapons  
 - [ ] Climbing  
 - [ ] Enemies  
+
+#### 🧰 Supporting Systems (Later)
 - [ ] Levels  
 - [ ] Save/load pipeline  
 - [ ] Performance profiling pass  
+
+▶️ **Next Focus**
+- Align XR foundation decisions with scene bootstrapping
+- Validate baseline settings via a Quest build run
+- Define interaction/physics rules to unblock implementation
 
 This is intentionally early. The foundation matters more than rushing features.
 
