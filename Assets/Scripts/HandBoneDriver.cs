@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.XR;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class HandBoneDriver : MonoBehaviour
 {
@@ -147,3 +150,18 @@ public class HandBoneDriver : MonoBehaviour
 }
 
 public class ReadOnlyAttribute : PropertyAttribute {}
+
+#region Helpers (Inspector Drawer Utilities)
+#if UNITY_EDITOR
+[CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
+public class ReadOnlyDrawer : PropertyDrawer
+{
+    public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    {
+        GUI.enabled = false;
+        EditorGUI.PropertyField(position, property, true);
+        GUI.enabled = true;
+    }
+}
+#endif
+#endregion

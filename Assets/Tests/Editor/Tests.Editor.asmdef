@@ -1,7 +1,8 @@
 {
   "name": "Tests.Editor",
+  "references": [],
   "references": [
-    "ProjectVR.Runtime"
+    "Assembly-CSharp"
   ],
   "includePlatforms": [
     "Editor"
