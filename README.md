@@ -43,22 +43,28 @@ You climb, scramble, lose balance, drop things, panic, recover, and escape… or
 ## 📦 Current State of the Project
 
 ### ✅ Done
-- Repository created  
-- Core concept defined  
-- Tech stack decided  
-- Project structure planned  
-- Unity 6 project setup  
+- [x] Repository created  
+- [x] Core concept defined  
+- [x] Tech stack decided  
+- [x] Project structure planned  
+- [x] Unity 6 project setup  
 
 ### 🚧 In Progress
-- XR foundation planning  
-- Interaction and physics approach design  
+- [ ] XR foundation planning  
+- [ ] Interaction and physics approach design  
+- [ ] Project settings baseline (rendering/input)  
+- [ ] Quest build settings pass  
+- [ ] XR scene bootstrapping (rig + hands)  
+
 
 ### ❌ Not Implemented Yet
-- Gameplay systems  
-- Weapons  
-- Climbing  
-- Enemies  
-- Levels  
+- [ ] Gameplay systems  
+- [ ] Weapons  
+- [ ] Climbing  
+- [ ] Enemies  
+- [ ] Levels  
+- [ ] Save/load pipeline  
+- [ ] Performance profiling pass  
 
 This is intentionally early. The foundation matters more than rushing features.
 
