@@ -52,7 +52,7 @@ You climb, scramble, lose balance, drop things, panic, recover, and escape… or
 - [x] Main menu scene with XR UI laser pointer + menu manager scripts  
 
 ### 🚧 In Progress
-**Legend:** ⏳ = active, ⛔ = blocked, 🧪 = working but unstable
+**Legend:** ⏳ = active ⛔ = blocked 🧪 = working but unstable
 
 #### 🧠 Design / Planning
 _No active design docs tracked yet._
