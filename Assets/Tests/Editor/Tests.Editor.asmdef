@@ -1,6 +1,9 @@
 {
   "name": "Tests.Editor",
   "references": [],
+  "references": [
+    "Assembly-CSharp"
+  ],
   "includePlatforms": [
     "Editor"
   ],

@@ -87,7 +87,8 @@ public class RebindButton : MonoBehaviour
             return;
 
         button.interactable = false;
-        label.text = "Press any key...";
+        if (label != null)
+            label.text = "Press any key...";
 
         op = action.PerformInteractiveRebinding(bindingIndex)
             .WithControlsExcluding("<Mouse>/position")
@@ -95,7 +96,13 @@ public class RebindButton : MonoBehaviour
             .OnComplete(operation =>
             {
                 manager.SaveBinding(actionName, bindingIndex);
-                op.Dispose();
+                operation.Dispose();
+                button.interactable = true;
+                UpdateLabel();
+            })
+            .OnCancel(operation =>
+            {
+                operation.Dispose();
                 button.interactable = true;
                 UpdateLabel();
             })
