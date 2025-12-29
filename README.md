@@ -47,9 +47,9 @@ You climb, scramble, lose balance, drop things, panic, recover, and escape… or
 - Core concept defined  
 - Tech stack decided  
 - Project structure planned  
+- Unity 6 project setup  
 
 ### 🚧 In Progress
-- Unity 6 project setup  
 - XR foundation planning  
 - Interaction and physics approach design  
 
